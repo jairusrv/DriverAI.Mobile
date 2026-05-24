@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/user_parameters.dart';
 import '../../providers/subscription_provider.dart';
+import '../../providers/user_preferences_provider.dart';
 
 class UserConfigScreen extends ConsumerStatefulWidget {
   const UserConfigScreen({super.key});
