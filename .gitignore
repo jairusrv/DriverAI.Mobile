@@ -1,0 +1,39 @@
+# Flutter/Dart
+.dart_tool/
+.pub/
+build/
+flutter_*.png
+*.lock
+*.iml
+.idea/
+.vscode/
+*.swp
+*.class
+*.log
+.DS_Store
+**/android/**/generated/
+**/ios/**/generated/
+**/ios/.symlinks/
+**/macos/**/generated/
+**/linux/**/generated/
+**/windows/**/generated/
+**/web/**/generated/
+
+# Android
+**/android/**/local.properties
+**/android/**/keystore.properties
+
+# iOS
+**/ios/**/Podfile.lock
+**/ios/**/Pods/
+**/ios/**/.generated/
+
+# Testing
+coverage/
+**/test/.test_coverage.dart
+
+# Secrets
+*.key
+*.pem
+*.p12
+*.jks
