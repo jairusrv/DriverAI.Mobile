@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../widgets/common/custom_button.dart';
 import '../../../widgets/common/custom_text_field.dart';
 import '../../../core/utils/validators.dart';
-import '../../../presentation/providers/auth_provider.dart';
+import '../../providers/auth_provider.dart';
+import 'verify_email_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -38,7 +39,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passwordController.text,
           );
       if (result != null && mounted) {
-        context.goNamed('verify-code', extra: _phoneController.text.trim());
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => VerifyEmailScreen(email: _emailController.text.trim())),
+        );
       } else if (mounted) {
         final error = ref.read(authNotifierProvider).errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(

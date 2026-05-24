@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/verify_code_screen.dart';
+import '../screens/auth/verify_email_screen.dart'; // ← importar
 import '../screens/home/home_screen.dart';
 import '../screens/subscription/subscription_screen.dart';
 
@@ -17,6 +18,14 @@ final GoRouter appRouter = GoRouter(
       path: '/register',
       name: 'register',
       builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: '/verify-email', // ← nueva ruta
+      name: 'verify-email',
+      builder: (context, state) {
+        final email = state.extra as String;
+        return VerifyEmailScreen(email: email);
+      },
     ),
     GoRoute(
       path: '/verify-code',

@@ -1,12 +1,13 @@
 import 'package:dartz/dartz.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../domain/entities/user_entity.dart';
 import '../../core/errors/failures.dart';
 import '../datasources/remote/auth_api.dart';
 import '../models/register_request.dart';
 import '../models/verify_code_request.dart';
 import '../models/login_request.dart';
 import '../models/resend_code_request.dart';
+import '../models/verify_email_request.dart';
+import '../models/resend_email_code_request.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthApi authApi;
@@ -83,6 +84,40 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(response.data!);
       } else {
         return Left(AuthFailure(response.message));
+      }
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  // ========== NUEVOS MÉTODOS ==========
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final request = VerifyEmailRequest(email: email, code: code);
+      final response = await authApi.verifyEmail(request);
+      if (response.success && response.data != null) {
+        return Right(response.data!);
+      } else {
+        return Left(VerificationFailure(response.message));
+      }
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resendEmailCode(String email) async {
+    try {
+      final request = ResendEmailCodeRequest(email: email);
+      final response = await authApi.resendEmailCode(request);
+      if (response.success) {
+        return const Right(null);
+      } else {
+        return Left(ServerFailure(response.message));
       }
     } catch (e) {
       return Left(ServerFailure(e.toString()));
