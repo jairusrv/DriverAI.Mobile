@@ -9,11 +9,10 @@ import '../../../domain/calculators/profitability_calculator.dart';
 import '../../../domain/entities/user_parameters.dart';
 import '../../../data/datasources/remote/api_client.dart';
 import '../../../data/datasources/remote/recope_api.dart';
-import '../../../core/errors/failures.dart';
-import '../configuration/user_config_screen.dart';
 import '../../providers/user_preferences_provider.dart';
-import '../../../presentation/providers/subscription_provider.dart';
+import '../../providers/subscription_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../configuration/user_config_screen.dart';
 
 final recopeApiProvider = Provider((ref) => RecopeApi(ref.read(apiClientProvider).dio));
 final recopeServiceProvider = Provider((ref) => RecopeService(ref.read(recopeApiProvider)));
@@ -29,7 +28,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasCheckedAccess = false;
-  bool _hasAccess = false;
+  bool _hasAccess = true; // Por defecto asumimos acceso (si falla, permitimos)
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -38,20 +38,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _checkAccessAndSetup() async {
-    const storage = FlutterSecureStorage();
-    final phoneNumber = await storage.read(key: 'phone_number');
-    if (phoneNumber == null) {
-      if (mounted) context.goNamed('login');
-      return;
-    }
-    final api = ref.read(subscriptionApiProvider);
-    final response = await api.getSubscriptionStatus(phoneNumber);
-    final hasAccess = response.success && response.data != null && response.data!.hasAccess;
-    setState(() {
-      _hasCheckedAccess = true;
-      _hasAccess = hasAccess;
-    });
-    if (hasAccess && mounted) {
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) {
+        if (mounted) context.goNamed('login');
+        return;
+      }
+
+      final phoneNumber = await storage.read(key: 'phone_number');
+      if (phoneNumber == null || phoneNumber.isEmpty) {
+        // Si no hay teléfono, igual dejamos pasar (puede ser un error)
+        setState(() {
+          _hasCheckedAccess = true;
+          _hasAccess = true;
+        });
+        _setupNotificationListener();
+        return;
+      }
+
+      // Intentar obtener estado de suscripción, pero si falla, igual permitir acceso
+      try {
+        final api = ref.read(subscriptionApiProvider);
+        final response = await api.getSubscriptionStatus(phoneNumber);
+        final hasAccess = response.success && response.data != null && response.data!.hasAccess;
+        setState(() {
+          _hasCheckedAccess = true;
+          _hasAccess = hasAccess;
+          _errorMessage = null;
+        });
+      } catch (e) {
+        // Si el endpoint falla, igual permitimos acceso (modo desarrollo)
+        setState(() {
+          _hasCheckedAccess = true;
+          _hasAccess = true;
+          _errorMessage = 'No se pudo verificar suscripción, pero puedes continuar.';
+        });
+      }
+
+      if (_hasAccess && mounted) {
+        _setupNotificationListener();
+      }
+    } catch (e) {
+      setState(() {
+        _hasCheckedAccess = true;
+        _hasAccess = true;
+        _errorMessage = 'Error inesperado, pero puedes continuar.';
+      });
       _setupNotificationListener();
     }
   }
@@ -82,6 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (!_hasCheckedAccess) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
     if (!_hasAccess) {
       return Scaffold(
         appBar: AppBar(title: const Text('DriverAI')),
@@ -104,6 +138,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       );
     }
+
+    // Pantalla principal (acceso concedido)
     return Scaffold(
       appBar: AppBar(
         title: const Text('DriverAI'),
@@ -119,19 +155,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.notifications_active, size: 80, color: Colors.blue),
-            SizedBox(height: 20),
-            Text('Esperando notificaciones de Uber/Didi...'),
-            SizedBox(height: 10),
-            Text('Cuando llegue un viaje, aparecerá un overlay con el análisis.'),
-            SizedBox(height: 20),
-            Text('Configura tu vehículo desde el ícono de ajustes.'),
-          ],
-        ),
+      body: Column(
+        children: [
+          if (_errorMessage != null)
+            Container(
+              color: Colors.orange,
+              padding: const EdgeInsets.all(8),
+              child: Text(_errorMessage!, style: const TextStyle(color: Colors.white)),
+            ),
+          const Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.notifications_active, size: 80, color: Colors.blue),
+                  SizedBox(height: 20),
+                  Text('Esperando notificaciones de Uber/Didi...'),
+                  SizedBox(height: 10),
+                  Text('Cuando llegue un viaje, aparecerá un overlay con el análisis.'),
+                  SizedBox(height: 20),
+                  Text('Configura tu vehículo desde el ícono de ajustes.'),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
