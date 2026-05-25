@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import '../../models/api_response.dart';
 import '../../models/register_request.dart';
 import '../../models/verify_code_request.dart';
-import '../../models/resend_code_request.dart';
 import '../../models/login_request.dart';
+import '../../models/resend_code_request.dart';
 import '../../models/verify_email_request.dart';
 import '../../models/resend_email_code_request.dart';
 
@@ -23,7 +23,7 @@ class AuthApi {
     return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);
   }
 
-  // Reenviar código SMS
+  // Reenviar SMS
   Future<ApiResponse<void>> resendCode(ResendCodeRequest request) async {
     final response = await _dio.post('/api/auth/resend-code', data: request.toJson());
     return ApiResponse.fromJson(response.data, (_) => null);
@@ -35,7 +35,7 @@ class AuthApi {
     return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);
   }
 
-  // ========== NUEVOS MÉTODOS PARA VERIFICACIÓN DE EMAIL ==========
+  // ========== MÉTODOS DE EMAIL (aunque el backend auto-verifique) ==========
   Future<ApiResponse<Map<String, dynamic>>> verifyEmail(VerifyEmailRequest request) async {
     final response = await _dio.post('/api/auth/verify-email', data: request.toJson());
     return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);

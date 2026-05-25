@@ -11,6 +11,7 @@ class ApiClient {
       baseUrl: ApiConstants.baseUrl,
       connectTimeout: const Duration(seconds: ApiConstants.defaultTimeout),
       receiveTimeout: const Duration(seconds: ApiConstants.defaultTimeout),
+      sendTimeout: const Duration(seconds: ApiConstants.defaultTimeout),
       headers: {'Content-Type': 'application/json'},
     ));
     _addInterceptors();
@@ -25,7 +26,10 @@ class ApiClient {
         }
         return handler.next(options);
       },
-      onError: (error, handler) => handler.next(error),
+      onError: (error, handler) {
+        print('Dio error: ${error.message}');
+        return handler.next(error);
+      },
     ));
   }
 

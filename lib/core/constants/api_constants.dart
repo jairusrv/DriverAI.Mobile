@@ -8,5 +8,5 @@ class ApiConstants {
   static const String activateSubscription = '/api/auth/activate-subscription';
   static const String recopeData = '/api/recope/datos';
   static const String recopeUpdate = '/api/recope/actualizar';
-  static const int defaultTimeout = 30;
+  static const int defaultTimeout = 60; // 6 seconds
 }

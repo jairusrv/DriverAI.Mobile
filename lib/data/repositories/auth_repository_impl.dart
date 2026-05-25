@@ -20,9 +20,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String username,
     required String password,
+    required String imei,
   }) async {
     try {
       final request = RegisterRequest(
+        imei: imei,
         phoneNumber: phoneNumber,
         email: email,
         username: username,
@@ -90,7 +92,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  // ========== NUEVOS MÉTODOS ==========
+  // ========== MÉTODOS DE EMAIL ==========
   @override
   Future<Either<Failure, Map<String, dynamic>>> verifyEmail({
     required String email,

@@ -11,12 +11,10 @@ import '../../domain/usecases/auth/resend_code_usecase.dart';
 import '../../domain/usecases/auth/verify_email_usecase.dart';
 import '../../domain/usecases/auth/resend_email_code_usecase.dart';
 
-// Dependencias base
 final apiClientProvider = Provider((ref) => ApiClient());
 final authApiProvider = Provider((ref) => AuthApi(ref.read(apiClientProvider).dio));
 final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepositoryImpl(ref.read(authApiProvider)));
 
-// UseCases
 final loginUseCaseProvider = Provider((ref) => LoginUseCase(ref.read(authRepositoryProvider)));
 final registerUseCaseProvider = Provider((ref) => RegisterUseCase(ref.read(authRepositoryProvider)));
 final verifyCodeUseCaseProvider = Provider((ref) => VerifyCodeUseCase(ref.read(authRepositoryProvider)));
@@ -26,21 +24,24 @@ final resendEmailCodeUseCaseProvider = Provider((ref) => ResendEmailCodeUseCase(
 
 final secureStorageProvider = Provider((ref) => const FlutterSecureStorage());
 
-// Estado de autenticación
 class AuthState {
   final bool isLoading;
   final bool isAuthenticated;
   final bool isUnverified;
+  final bool subscriptionRequired;
   final String? errorMessage;
   final Map<String, dynamic>? userData;
-  final String? pendingPhoneNumber; // útil para guardar el teléfono temporalmente
+  final Map<String, dynamic>? subscriptionData;
+  final String? pendingPhoneNumber;
 
   const AuthState({
     required this.isLoading,
     required this.isAuthenticated,
     this.isUnverified = false,
+    this.subscriptionRequired = false,
     this.errorMessage,
     this.userData,
+    this.subscriptionData,
     this.pendingPhoneNumber,
   });
 
@@ -49,6 +50,7 @@ class AuthState {
   const AuthState.unverified(String phoneNumber) : this(isLoading: false, isAuthenticated: false, isUnverified: true, pendingPhoneNumber: phoneNumber);
   const AuthState.authenticated(Map<String, dynamic> data) : this(isLoading: false, isAuthenticated: true, userData: data);
   const AuthState.error(String message) : this(isLoading: false, isAuthenticated: false, errorMessage: message);
+  const AuthState.subscriptionRequired(Map<String, dynamic> data) : this(isLoading: false, isAuthenticated: false, subscriptionRequired: true, subscriptionData: data);
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -77,12 +79,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         _secureStorage = secureStorage,
         super(const AuthState.initial());
 
-  // Registro
   Future<Map<String, dynamic>?> register({
     required String phoneNumber,
     required String email,
     required String username,
     required String password,
+    required String imei,
   }) async {
     state = const AuthState.loading();
     final result = await _registerUseCase(
@@ -90,63 +92,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
       email: email,
       username: username,
       password: password,
+      imei: imei,
     );
     return result.fold(
       (failure) {
         state = AuthState.error(failure.message);
         return null;
       },
-      (data) {
-        // data contiene: phoneNumber, email, trialEndDate, etc.
-        state = AuthState.unverified(phoneNumber);
+      (data) async {
+        final token = data['token'] as String;
+        final user = data['user'] as Map<String, dynamic>;
+        await _secureStorage.write(key: 'auth_token', value: token);
+        await _secureStorage.write(key: 'user_id', value: user['id'].toString());
+        await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
+        await _secureStorage.write(key: 'email', value: user['email']);
+        await _secureStorage.write(key: 'username', value: user['username']);
+        state = AuthState.authenticated(data);
         return data;
       },
     );
   }
 
-  // Verificación de email
-  Future<bool> verifyEmail(String email, String code) async {
-    state = const AuthState.loading();
-    final result = await _verifyEmailUseCase(email: email, code: code);
-    return result.fold(
-      (failure) {
-        state = AuthState.error(failure.message);
-        return false;
-      },
-      (data) async {
-        // Si la verificación de email completa el proceso (ya no requiere SMS), aquí se guarda el token
-        if (data.containsKey('token')) {
-          final token = data['token'] as String;
-          final user = data['user'] as Map<String, dynamic>;
-          await _secureStorage.write(key: 'auth_token', value: token);
-          await _secureStorage.write(key: 'user_id', value: user['id'].toString());
-          await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
-          await _secureStorage.write(key: 'email', value: user['email']);
-          await _secureStorage.write(key: 'username', value: user['username']);
-          state = AuthState.authenticated(data);
-          return true;
-        } else {
-          // Solo se verificó email, falta SMS
-          state = AuthState.unverified(state.pendingPhoneNumber ?? '');
-          return true;
-        }
-      },
-    );
-  }
-
-  // Reenviar código de email
-  Future<bool> resendEmailCode(String email) async {
-    final result = await _resendEmailCodeUseCase(email);
-    return result.fold(
-      (failure) {
-        state = AuthState.error(failure.message);
-        return false;
-      },
-      (_) => true,
-    );
-  }
-
-  // Verificación de SMS
   Future<bool> verifyCode(String phoneNumber, String code) async {
     state = const AuthState.loading();
     final result = await _verifyCodeUseCase(phoneNumber: phoneNumber, code: code);
@@ -169,7 +135,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  // Reenviar código SMS
   Future<bool> resendCode(String phoneNumber) async {
     final result = await _resendCodeUseCase(phoneNumber);
     return result.fold(
@@ -181,7 +146,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  // Login
   Future<bool> login(String phoneNumber, String password) async {
     state = const AuthState.loading();
     final result = await _loginUseCase(phoneNumber: phoneNumber, password: password);
@@ -204,7 +168,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  // Cierre de sesión
+  Future<bool> verifyEmail(String email, String code) async {
+    state = const AuthState.loading();
+    final result = await _verifyEmailUseCase(email: email, code: code);
+    return result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        return false;
+      },
+      (data) async {
+        // Si el backend devuelve token directamente, lo guardamos; si no, solo marcamos éxito
+        if (data.containsKey('token')) {
+          final token = data['token'] as String;
+          final user = data['user'] as Map<String, dynamic>;
+          await _secureStorage.write(key: 'auth_token', value: token);
+          await _secureStorage.write(key: 'user_id', value: user['id'].toString());
+          await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
+          await _secureStorage.write(key: 'email', value: user['email']);
+          await _secureStorage.write(key: 'username', value: user['username']);
+          state = AuthState.authenticated(data);
+        } else {
+          state = AuthState.unverified(state.pendingPhoneNumber ?? '');
+        }
+        return true;
+      },
+    );
+  }
+
+  Future<bool> resendEmailCode(String email) async {
+    final result = await _resendEmailCodeUseCase(email);
+    return result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        return false;
+      },
+      (_) => true,
+    );
+  }
+
   Future<void> logout() async {
     await _secureStorage.deleteAll();
     state = const AuthState.initial();

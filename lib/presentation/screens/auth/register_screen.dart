@@ -5,7 +5,7 @@ import '../../../widgets/common/custom_button.dart';
 import '../../../widgets/common/custom_text_field.dart';
 import '../../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
-import 'verify_email_screen.dart';
+import '../../../services/device_id_service.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -20,34 +20,44 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final DeviceIdService _deviceIdService = DeviceIdService();
+  String _deviceId = '';
 
   @override
-  void dispose() {
-    _phoneController.dispose();
-    _emailController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadDeviceId();
+  }
+
+  Future<void> _loadDeviceId() async {
+    _deviceId = await _deviceIdService.getDeviceId();
+    setState(() {});
   }
 
   Future<void> _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
-      final result = await ref.read(authNotifierProvider.notifier).register(
-            phoneNumber: _phoneController.text.trim(),
-            email: _emailController.text.trim(),
-            username: _usernameController.text.trim(),
-            password: _passwordController.text,
-          );
-      if (result != null && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => VerifyEmailScreen(email: _emailController.text.trim())),
-        );
-      } else if (mounted) {
+    if (!_formKey.currentState!.validate()) return;
+    if (_deviceId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error obteniendo identificador del dispositivo')),
+      );
+      return;
+    }
+    final result = await ref.read(authNotifierProvider.notifier).register(
+      phoneNumber: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
+      username: _usernameController.text.trim(),
+      password: _passwordController.text,
+      imei: _deviceId,
+    );
+    if (mounted) {
+      if (result != null) {
+        context.goNamed('home');
+      } else {
+        // El error ya está en el estado, se muestra un SnackBar
         final error = ref.read(authNotifierProvider).errorMessage;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? 'Error en registro')),
-        );
+        if (error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+        }
       }
     }
   }

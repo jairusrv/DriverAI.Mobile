@@ -1,10 +1,12 @@
 class RegisterRequest {
+  final String imei;
   final String phoneNumber;
   final String email;
   final String username;
   final String password;
 
   RegisterRequest({
+    required this.imei,
     required this.phoneNumber,
     required this.email,
     required this.username,
@@ -12,9 +14,10 @@ class RegisterRequest {
   });
 
   Map<String, dynamic> toJson() => {
-        'phoneNumber': phoneNumber,
-        'email': email,
-        'username': username,
-        'password': password,
-      };
+    'imei': imei,
+    'phoneNumber': phoneNumber,
+    'email': email,
+    'username': username,
+    'password': password,
+  };
 }
