@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../services/ride_notification_listener.dart';
 import '../../../services/recope_service.dart';
 import '../../../services/overlay_service.dart';
+import '../../../services/minimize_service.dart'; // ← nuevo
 import '../../../domain/calculators/profitability_calculator.dart';
 import '../../../domain/entities/user_parameters.dart';
 import '../../../data/datasources/remote/api_client.dart';
@@ -28,7 +29,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasCheckedAccess = false;
-  bool _hasAccess = true; // Por defecto asumimos acceso (si falla, permitimos)
+  bool _hasAccess = true;
   String? _errorMessage;
 
   @override
@@ -48,7 +49,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
       final phoneNumber = await storage.read(key: 'phone_number');
       if (phoneNumber == null || phoneNumber.isEmpty) {
-        // Si no hay teléfono, igual dejamos pasar (puede ser un error)
         setState(() {
           _hasCheckedAccess = true;
           _hasAccess = true;
@@ -57,7 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return;
       }
 
-      // Intentar obtener estado de suscripción, pero si falla, igual permitir acceso
       try {
         final api = ref.read(subscriptionApiProvider);
         final response = await api.getSubscriptionStatus(phoneNumber);
@@ -68,7 +67,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _errorMessage = null;
         });
       } catch (e) {
-        // Si el endpoint falla, igual permitimos acceso (modo desarrollo)
         setState(() {
           _hasCheckedAccess = true;
           _hasAccess = true;
@@ -110,6 +108,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     };
   }
 
+  Future<void> _minimizeAndWait() async {
+    // Mostrar un mensaje antes de minimizar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('DriverAI continuará escuchando notificaciones en segundo plano')),
+    );
+    // Pequeña pausa para que el usuario vea el mensaje
+    await Future.delayed(const Duration(seconds: 1));
+    // Minimizar la app
+    await MinimizeService.minimizeApp();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_hasCheckedAccess) {
@@ -139,7 +148,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    // Pantalla principal (acceso concedido)
     return Scaffold(
       appBar: AppBar(
         title: const Text('DriverAI'),
@@ -163,19 +171,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: const EdgeInsets.all(8),
               child: Text(_errorMessage!, style: const TextStyle(color: Colors.white)),
             ),
-          const Expanded(
+          Expanded(
             child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.notifications_active, size: 80, color: Colors.blue),
-                  SizedBox(height: 20),
-                  Text('Esperando notificaciones de Uber/Didi...'),
-                  SizedBox(height: 10),
-                  Text('Cuando llegue un viaje, aparecerá un overlay con el análisis.'),
-                  SizedBox(height: 20),
-                  Text('Configura tu vehículo desde el ícono de ajustes.'),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.notifications_active, size: 80, color: Colors.blue),
+                    const SizedBox(height: 20),
+                    const Text('Esperando notificaciones de Uber/Didi...'),
+                    const SizedBox(height: 10),
+                    const Text('Cuando llegue un viaje, aparecerá un overlay con el análisis.'),
+                    const SizedBox(height: 30),
+                    ElevatedButton.icon(
+                      onPressed: _minimizeAndWait,
+                      icon: const Icon(Icons.phone_android),
+                      label: const Text('Esperar viajes'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Presiona "Esperar viajes" para minimizar la app.\nSeguiremos escuchando notificaciones.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

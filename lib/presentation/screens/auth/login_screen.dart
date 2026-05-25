@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../widgets/common/custom_button.dart';
 import '../../../widgets/common/custom_text_field.dart';
 import '../../../core/utils/validators.dart';
-import '../../../presentation/providers/auth_provider.dart';
-import 'register_screen.dart';
+import '../../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +32,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _passwordController.text,
           );
       if (success && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        context.goNamed('home');
       } else if (mounted) {
         final error = ref.read(authNotifierProvider).errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 CustomButton(text: 'Iniciar sesión', onPressed: _handleLogin),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                onPressed: () => context.pushNamed('register'),
                 child: const Text('¿No tienes cuenta? Regístrate'),
               ),
             ],
