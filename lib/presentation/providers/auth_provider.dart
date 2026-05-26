@@ -107,6 +107,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
         await _secureStorage.write(key: 'email', value: user['email']);
         await _secureStorage.write(key: 'username', value: user['username']);
+        await _secureStorage.write(
+  key: 'role',
+  value: user['role'] ?? 'User',
+);
         state = AuthState.authenticated(data);
         return data;
       },
@@ -129,6 +133,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
         await _secureStorage.write(key: 'email', value: user['email']);
         await _secureStorage.write(key: 'username', value: user['username']);
+        await _secureStorage.write(
+  key: 'role',
+  value: user['role'] ?? 'User',
+);
         state = AuthState.authenticated(data);
         return true;
       },
@@ -162,6 +170,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
         await _secureStorage.write(key: 'email', value: user['email']);
         await _secureStorage.write(key: 'username', value: user['username']);
+        await _secureStorage.write(
+  key: 'role',
+  value: user['role'] ?? 'User',
+);
         state = AuthState.authenticated(data);
         return true;
       },
@@ -186,6 +198,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
           await _secureStorage.write(key: 'email', value: user['email']);
           await _secureStorage.write(key: 'username', value: user['username']);
+          await _secureStorage.write(
+  key: 'role',
+  value: user['role'] ?? 'User',
+);
           state = AuthState.authenticated(data);
         } else {
           state = AuthState.unverified(state.pendingPhoneNumber ?? '');
