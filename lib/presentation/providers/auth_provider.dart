@@ -11,6 +11,7 @@ import '../../domain/usecases/auth/resend_code_usecase.dart';
 import '../../domain/usecases/auth/verify_email_usecase.dart';
 import '../../domain/usecases/auth/resend_email_code_usecase.dart';
 import '../../services/fuel_price_session_service.dart';
+import '../../services/session_manager.dart';
 
 final apiClientProvider = Provider((ref) => ApiClient());
 final authApiProvider = Provider((ref) => AuthApi(ref.read(apiClientProvider).dio));
@@ -224,12 +225,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future logout() async {
-  await FuelPriceSessionService.clear();
+     await SessionManager.clear();
+    await FuelPriceSessionService.clear();
 
-  await _secureStorage.deleteAll();
+    await _secureStorage.deleteAll();
 
-  state = const AuthState.initial();
-}
+    state = const AuthState.initial();
+  }
 }
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {

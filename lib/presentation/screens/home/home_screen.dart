@@ -7,13 +7,18 @@ import '../../../services/ride_notification_listener.dart';
 import '../../../services/recope_service.dart';
 import '../../../services/overlay_service.dart';
 import '../../../services/minimize_service.dart';
+import '../../../services/session_manager.dart';
+
 import '../../../domain/calculators/profitability_calculator.dart';
+
 import '../../../data/datasources/remote/api_client.dart';
 import '../../../data/datasources/remote/recope_api.dart';
 import '../../../data/datasources/remote/history_api.dart';
+
 import '../../providers/user_preferences_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../providers/auth_provider.dart';
+
 import '../configuration/user_config_screen.dart';
 
 final recopeApiProvider = Provider(
@@ -53,18 +58,14 @@ class _HomeScreenState
   @override
   void initState() {
     super.initState();
-
     _checkAccessAndSetup();
   }
 
-  Future<void> _checkAccessAndSetup()
-      async {
+  Future<void> _checkAccessAndSetup() async {
     try {
-      const storage =
-          FlutterSecureStorage();
+      const storage = FlutterSecureStorage();
 
-      final token =
-          await storage.read(
+      final token = await storage.read(
         key: 'auth_token',
       );
 
@@ -72,12 +73,12 @@ class _HomeScreenState
         if (mounted) {
           context.goNamed('login');
         }
-
         return;
       }
 
-      final phoneNumber =
-          await storage.read(
+      await SessionManager.initialize();
+
+      final phoneNumber = await storage.read(
         key: 'phone_number',
       );
 
@@ -89,7 +90,6 @@ class _HomeScreenState
         });
 
         _setupNotificationListener();
-
         return;
       }
 
@@ -104,8 +104,8 @@ class _HomeScreenState
 
         final hasAccess =
             response.success &&
-                response.data != null &&
-                response.data!.hasAccess;
+            response.data != null &&
+            response.data!.hasAccess;
 
         setState(() {
           _hasCheckedAccess = true;
@@ -137,8 +137,7 @@ class _HomeScreenState
   }
 
   void _setupNotificationListener() {
-    final listener =
-        ref.read(
+    final listener = ref.read(
       rideNotificationListenerProvider,
     );
 
@@ -151,84 +150,63 @@ class _HomeScreenState
         return;
       }
 
-      final fuelPriceResult =
-          await ref
-              .read(recopeServiceProvider)
-              .getCurrentFuelPrice();
+      try {
+        final fuelPrice =
+            await SessionManager.getFuelPrice(
+          userParams.fuelType,
+        );
 
-      fuelPriceResult.fold(
-        (failure) => debugPrint(
-          'Error al obtener precio: ${failure.message}',
-        ),
-        (fuelPrice) async {
-          final calculator =
-              ref.read(
-            profitabilityCalculatorProvider,
+        final calculator = ref.read(
+          profitabilityCalculatorProvider,
+        );
+
+        final result =
+            calculator.calculate(
+          ride: rideData,
+          fuelPricePerLiter: fuelPrice,
+          params: userParams,
+        );
+
+        OverlayService.showProfitabilityOverlay(
+          result,
+        );
+
+        final profitPerKm =
+            rideData.distanceKm > 0
+                ? result.netProfit /
+                    rideData.distanceKm
+                : 0.0;
+
+        try {
+          await HistoryApi().saveRide(
+            fare: rideData.fare,
+            distanceKm: rideData.distanceKm,
+            pickupDistanceKm: 0,
+            estimatedTimeMinutes:
+                rideData.durationMinutes
+                    .toDouble(),
+            profit: result.netProfit,
+            profitPerKm: profitPerKm,
+            decision: result.isProfitable
+                ? 'ACEPTAR'
+                : 'RECHAZAR',
+            sourceApp: rideData.provider,
           );
-
-          final result =
-              calculator.calculate(
-            ride: rideData,
-            fuelPricePerLiter:
-                fuelPrice,
-            params: userParams,
+        } catch (e) {
+          debugPrint(
+            'Error guardando historial: $e',
           );
-
-          OverlayService
-              .showProfitabilityOverlay(
-            result,
-          );
-
-          final profitPerKm =
-              rideData.distanceKm > 0
-                  ? result.netProfit /
-                      rideData.distanceKm
-                  : 0.0;
-
-          try {
-            await HistoryApi()
-                .saveRide(
-              fare: rideData.fare,
-              distanceKm:
-                  rideData.distanceKm,
-
-              // Tu modelo actual no trae pickup separado.
-              // Por ahora lo guardamos como 0.
-              pickupDistanceKm: 0,
-
-              // Tu modelo actual usa durationMinutes.
-              estimatedTimeMinutes:
-                  rideData.durationMinutes
-                      .toDouble(),
-
-              profit: result.netProfit,
-
-              profitPerKm:
-                  profitPerKm,
-
-              decision:
-                  result.isProfitable
-                      ? 'ACEPTAR'
-                      : 'RECHAZAR',
-
-              // Tu modelo actual usa provider.
-              sourceApp:
-                  rideData.provider,
-            );
-          } catch (e) {
-            debugPrint(
-              'Error guardando historial: $e',
-            );
-          }
-        },
-      );
+        }
+      } catch (e) {
+        debugPrint(
+          'Error procesando viaje: $e',
+        );
+      }
     };
   }
 
-  Future<void> _minimizeAndWait()
-      async {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
+  Future<void> _minimizeAndWait() async {
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
           'DriverAI continuará escuchando notificaciones en segundo plano',
@@ -243,12 +221,123 @@ class _HomeScreenState
     await MinimizeService.minimizeApp();
   }
 
+  Future<void> _logout() async {
+    await ref
+        .read(authNotifierProvider.notifier)
+        .logout();
+
+    if (mounted) {
+      context.goNamed('login');
+    }
+  }
+
+  void _openSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const UserConfigScreen(),
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+            ),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.end,
+              children: [
+                Icon(
+                  Icons.local_taxi,
+                  color: Colors.white,
+                  size: 42,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'DriverAI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.home,
+            ),
+            title: const Text(
+              'Inicio',
+            ),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.settings,
+            ),
+            title: const Text(
+              'Configuración',
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              _openSettings();
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.payment,
+            ),
+            title: const Text(
+              'Suscripción',
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              context.goNamed('subscription');
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(
+              Icons.logout,
+              color: Colors.red,
+            ),
+            title: const Text(
+              'Cerrar sesión',
+              style: TextStyle(
+                color: Colors.red,
+              ),
+            ),
+            onTap: () async {
+              Navigator.pop(context);
+              await _logout();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_hasCheckedAccess) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child:
+              CircularProgressIndicator(),
         ),
       );
     }
@@ -260,6 +349,7 @@ class _HomeScreenState
             'DriverAI',
           ),
         ),
+        drawer: _buildDrawer(),
         body: Center(
           child: Column(
             mainAxisAlignment:
@@ -303,6 +393,7 @@ class _HomeScreenState
     }
 
     return Scaffold(
+      drawer: _buildDrawer(),
       appBar: AppBar(
         title: const Text(
           'DriverAI',
@@ -312,15 +403,7 @@ class _HomeScreenState
             icon: const Icon(
               Icons.settings,
             ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const UserConfigScreen(),
-                ),
-              );
-            },
+            onPressed: _openSettings,
           ),
         ],
       ),
@@ -347,8 +430,7 @@ class _HomeScreenState
                 ),
                 child: Column(
                   mainAxisAlignment:
-                      MainAxisAlignment
-                          .center,
+                      MainAxisAlignment.center,
                   children: [
                     const Icon(
                       Icons
