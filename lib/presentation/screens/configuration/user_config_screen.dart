@@ -1,7 +1,7 @@
 import 'package:driverai_mobile/presentation/providers/user_preferences_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../../services/fuel_price_session_service.dart';
 import '../../../data/datasources/remote/api_client.dart';
 import '../../../data/datasources/remote/recope_api.dart';
 import '../../../data/datasources/remote/settings_api.dart';
@@ -82,15 +82,16 @@ class _UserConfigScreenState
   
 
   Future<void> _loadInitialData() async {
-    await _loadRemoteSettings();
-    await _updateFuelPrice();
+  await _loadRemoteSettings();
+  await FuelPriceSessionService.getPrices();
+  await _updateFuelPrice();
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  if (mounted) {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   Future<void> _loadRemoteSettings() async {
     try {
@@ -145,62 +146,49 @@ class _UserConfigScreenState
   }
 
   Future<void> _updateFuelPrice() async {
-    if (_isManualFuelPrice) {
-  if (_fuelPriceController.text == '0' ||
-      _fuelPriceController.text.isEmpty) {
-    _fuelPriceController.text = '0';
+  if (_isManualFuelPrice) {
+    if (_fuelPriceController.text.isEmpty) {
+      _fuelPriceController.text = '0';
+    }
+
+    return;
   }
-  return;
-}
-    setState(() {
-      _isLoadingFuelPrice = true;
-    });
 
-    try {
-      final recopeService = RecopeService(
-        RecopeApi(
-          ApiClient().dio,
-        ),
-      );
+  setState(() {
+    _isLoadingFuelPrice = true;
+    _fuelPriceController.text = '';
+  });
 
-      final result =
-          await recopeService.getCurrentFuelPrice(
-        fuelType: _selectedFuelType,
-      );
+  try {
+    final price =
+        await FuelPriceSessionService.getPriceFor(
+      _selectedFuelType,
+    );
 
-      result.fold(
-        (failure) {
-          debugPrint(
-            'Error obteniendo precio RECOPE: ${failure.message}',
-          );
+    if (mounted) {
+      setState(() {
+        _fuelPriceController.text =
+            price.toStringAsFixed(0);
+      });
+    }
+  } catch (e) {
+    debugPrint(
+      'Error obteniendo precio desde sesión: $e',
+    );
 
-          if (mounted) {
-            _fuelPriceController.text = '0';
-          }
-        },
-        (price) {
-          if (mounted) {
-            _fuelPriceController.text =
-                price.toStringAsFixed(0);
-          }
-        },
-      );
-    } catch (e) {
-      debugPrint(
-        'Error actualizando precio combustible: $e',
-      );
-
-      if (mounted) {
+    if (mounted) {
+      setState(() {
         _fuelPriceController.text = '0';
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingFuelPrice = false;
-        });
-      }
+      });
+    }
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isLoadingFuelPrice = false;
+      });
     }
   }
+}
 
   String _normalizeFuelType(String value) {
     final normalized = value.toLowerCase().trim();
@@ -393,17 +381,20 @@ class _UserConfigScreenState
                 ),
               ],
               onChanged: (value) async {
-  if (value != null) {
-    setState(() {
-      _selectedFuelType = value;
-    });
-
-    ref
-        .read(userParametersProvider.notifier)
-        .updateFuelType(value);
-
-    await _updateFuelPrice();
+  if (value == null) {
+    return;
   }
+
+  setState(() {
+    _selectedFuelType = value;
+    _fuelPriceController.text = '';
+  });
+
+  ref
+      .read(userParametersProvider.notifier)
+      .updateFuelType(value);
+
+  await _updateFuelPrice();
 },
               decoration: const InputDecoration(
                 labelText: 'Tipo de combustible',
@@ -411,7 +402,7 @@ class _UserConfigScreenState
             ),
 
             const SizedBox(height: 16),
-
+/// El campo de precio se vuelve editable si el tipo de combustible es gas_lp o eléctrico
             TextFormField(
   controller: _fuelPriceController,
   readOnly: !_isManualFuelPrice,
