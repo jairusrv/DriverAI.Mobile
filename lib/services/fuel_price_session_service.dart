@@ -28,26 +28,27 @@ class FuelPriceSessionService {
     final savedPrices = await _storage.read(key: _pricesKey);
 
     if (savedDate == _todayKey() &&
-    savedPrices != null &&
-    savedPrices.isNotEmpty) {
-  final decoded = jsonDecode(savedPrices);
+        savedPrices != null &&
+        savedPrices.isNotEmpty) {
+      final decoded = jsonDecode(savedPrices);
 
-  if (decoded is Map<String, dynamic>) {
-    decoded.forEach((key, value) {
-      _memoryCache[_normalizeFuelType(key)] =
-          double.tryParse(value.toString()) ?? 0;
-    });
-  }
+      if (decoded is Map<String, dynamic>) {
+        decoded.forEach((key, value) {
+          _memoryCache[_normalizeFuelType(key)] =
+              double.tryParse(value.toString()) ?? 0;
+        });
+      }
 
-  if (_memoryCache.isNotEmpty) {
-    return _memoryCache;
-  }
+      return _memoryCache;
+    }
 
-  await clear();
-}
+    print('DriverAI: cargando precios combustible...');
 
-    final api = RecopeApi(ApiClient().dio);
-    final response = await api.getFuelPrices();
+final api = RecopeApi(ApiClient().dio);
+final response = await api.getFuelPrices();
+
+print('DriverAI: respuesta RECOPE success=${response.success}');
+print('DriverAI: precios recibidos=${response.data?.length}');
 
     if (response.success && response.data != null) {
       for (final item in response.data!) {
@@ -62,6 +63,7 @@ class FuelPriceSessionService {
           _memoryCache[key] = item.price;
         }
       }
+      print('DriverAI: fuel cache=$_memoryCache');
     }
 
     await _storage.write(

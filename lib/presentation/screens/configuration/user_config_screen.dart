@@ -162,15 +162,21 @@ class _UserConfigScreenState
     return;
   }
 
-  setState(() {
-    _isLoadingFuelPrice = true;
-    _fuelPriceController.text = '';
-  });
+  if (mounted) {
+    setState(() {
+      _isLoadingFuelPrice = true;
+      _fuelPriceController.text = '';
+    });
+  }
 
   try {
     final price =
         await FuelPriceSessionService.getPriceFor(
       _selectedFuelType,
+    );
+
+    print(
+      'DriverAI: selectedFuel=$_selectedFuelType price=$price',
     );
 
     if (mounted) {
@@ -579,20 +585,20 @@ const SizedBox(height: 20),
                 ),
               ],
               onChanged: (value) async {
-  if (value == null) {
-    return;
-  }
+                if (value == null) {
+                  return;
+              }
 
-  setState(() {
-    _selectedFuelType = value;
-    _fuelPriceController.text = '';
-  });
+              setState(() {
+                _selectedFuelType = value;
+                _fuelPriceController.text = '';
+              });
 
-  ref
-      .read(userParametersProvider.notifier)
-      .updateFuelType(value);
+              ref
+                .read(userParametersProvider.notifier)
+                .updateFuelType(value);
 
-  await _updateFuelPrice();
+              await _updateFuelPrice();
 },
               decoration: const InputDecoration(
                 labelText: 'Tipo de combustible',
