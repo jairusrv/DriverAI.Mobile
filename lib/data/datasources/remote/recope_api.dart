@@ -45,7 +45,8 @@ class RecopeApi {
   Future<ApiResponse<void>>
       updatePrices() async {
     final response = await _dio.get(
-      '/api/recope/actualizar',
+      //'/api/recope/actualizar',
+      '/api/Recope/datos',
     );
 
     final body = response.data;

@@ -11,11 +11,8 @@ class FuelPriceSessionService {
   static const FlutterSecureStorage _storage =
       FlutterSecureStorage();
 
-  static const String _pricesKey =
-      'fuel_prices_cache';
-
-  static const String _dateKey =
-      'fuel_prices_cache_date';
+  static const String _pricesKey = 'fuel_prices_cache';
+  static const String _dateKey = 'fuel_prices_cache_date';
 
   static String _todayKey() {
     final now = DateTime.now();
@@ -27,39 +24,37 @@ class FuelPriceSessionService {
       return _memoryCache;
     }
 
-    final savedDate = await _storage.read(
-      key: _dateKey,
-    );
-
-    final savedPrices = await _storage.read(
-      key: _pricesKey,
-    );
+    final savedDate = await _storage.read(key: _dateKey);
+    final savedPrices = await _storage.read(key: _pricesKey);
 
     if (savedDate == _todayKey() &&
-        savedPrices != null &&
-        savedPrices.isNotEmpty) {
-      final decoded =
-          jsonDecode(savedPrices) as Map<String, dynamic>;
+    savedPrices != null &&
+    savedPrices.isNotEmpty) {
+  final decoded = jsonDecode(savedPrices);
 
-      decoded.forEach((key, value) {
-        _memoryCache[key] =
-            double.tryParse(value.toString()) ?? 0;
-      });
+  if (decoded is Map<String, dynamic>) {
+    decoded.forEach((key, value) {
+      _memoryCache[_normalizeFuelType(key)] =
+          double.tryParse(value.toString()) ?? 0;
+    });
+  }
 
-      return _memoryCache;
-    }
+  if (_memoryCache.isNotEmpty) {
+    return _memoryCache;
+  }
 
-    final api = RecopeApi(
-      ApiClient().dio,
-    );
+  await clear();
+}
 
+    final api = RecopeApi(ApiClient().dio);
     final response = await api.getFuelPrices();
 
-    if (response.success &&
-        response.data != null) {
+    if (response.success && response.data != null) {
       for (final item in response.data!) {
-        final key =
-            _normalizeFuelType(item.fuelType);
+        final productText =
+            '${item.fuelType}'.toLowerCase().trim();
+
+        final key = _normalizeFuelType(productText);
 
         if (key == 'super' ||
             key == 'regular' ||
@@ -82,11 +77,8 @@ class FuelPriceSessionService {
     return _memoryCache;
   }
 
-  static Future<double> getPriceFor(
-    String fuelType,
-  ) async {
-    final normalized =
-        _normalizeFuelType(fuelType);
+  static Future<double> getPriceFor(String fuelType) async {
+    final normalized = _normalizeFuelType(fuelType);
 
     if (normalized == 'gas_lp' ||
         normalized == 'electric') {
@@ -103,33 +95,28 @@ class FuelPriceSessionService {
   static Future<void> clear() async {
     _memoryCache.clear();
 
-    await _storage.delete(
-      key: _pricesKey,
-    );
-
-    await _storage.delete(
-      key: _dateKey,
-    );
+    await _storage.delete(key: _pricesKey);
+    await _storage.delete(key: _dateKey);
   }
 
-  static String _normalizeFuelType(
-    String value,
-  ) {
-    final normalized =
-        value.toLowerCase().trim();
+  static String _normalizeFuelType(String value) {
+    final normalized = value.toLowerCase().trim();
 
     if (normalized.contains('super') ||
-        normalized.contains('súper')) {
+        normalized.contains('súper') ||
+        normalized.contains('superior')) {
       return 'super';
     }
 
     if (normalized.contains('regular') ||
-        normalized.contains('plus 91')) {
+        normalized.contains('plus 91') ||
+        normalized.contains('gasolina plus')) {
       return 'regular';
     }
 
     if (normalized.contains('diesel') ||
-        normalized.contains('diésel')) {
+        normalized.contains('diésel') ||
+        normalized.contains('diesel 50')) {
       return 'diesel';
     }
 

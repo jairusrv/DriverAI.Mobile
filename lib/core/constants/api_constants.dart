@@ -24,7 +24,8 @@ class ApiConstants {
       '/api/recope/datos';
 
   static const String recopeUpdate =
-      '/api/recope/actualizar';
+      //'/api/recope/actualizar';
+      '/api/Recope/datos';
 
   static const String settings =
       '/settings';

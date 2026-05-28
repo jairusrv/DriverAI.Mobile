@@ -13,12 +13,30 @@ class FuelPrice extends Equatable {
   });
 
   factory FuelPrice.fromJson(Map<String, dynamic> json) {
-    return FuelPrice(
-      price: (json['precio'] as num).toDouble(),
-      date: DateTime.parse(json['fecha']),
-      fuelType: json['tipo'] ?? 'super',
-    );
-  }
+  return FuelPrice(
+    price: (json['price'] ??
+            json['precio'] ??
+            json['Precio'] ??
+            0)
+        .toDouble(),
+    date: DateTime.tryParse(
+          (json['createdAt'] ??
+                  json['fecha'] ??
+                  json['Fecha'] ??
+                  DateTime.now().toIso8601String())
+              .toString(),
+        ) ??
+        DateTime.now(),
+    fuelType: (json['fuelType'] ??
+            json['tipo'] ??
+            json['Tipo'] ??
+            json['producto'] ??
+            json['Producto'] ??
+            'regular')
+        .toString()
+        .toLowerCase(),
+  );
+}
 
   @override
   List<Object?> get props => [price, fuelType];
