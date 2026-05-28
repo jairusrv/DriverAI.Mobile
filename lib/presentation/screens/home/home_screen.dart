@@ -19,7 +19,10 @@ import '../../providers/user_preferences_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../providers/auth_provider.dart';
 
+import '../history/history_screen.dart';
+
 import '../configuration/user_config_screen.dart';
+import '../stats/stats_screen.dart';
 
 final recopeApiProvider = Provider(
   (ref) => RecopeApi(
@@ -274,6 +277,47 @@ class _HomeScreenState
               ],
             ),
           ),
+          
+          ///*      ///
+          ListTile(
+  leading: const Icon(
+    Icons.bar_chart,
+  ),
+  title: const Text(
+    'Estadísticas',
+  ),
+  onTap: () {
+    Navigator.pop(context);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const StatsScreen(),
+      ),
+    );
+  },
+),
+///*      ///
+          ListTile(
+          leading: const Icon(
+          Icons.history,
+          ),
+          title: const Text(
+          'Historial',
+        ),
+  onTap: () {
+    Navigator.pop(context);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const HistoryScreen(),
+      ),
+    );
+  },
+),
           ListTile(
             leading: const Icon(
               Icons.home,
