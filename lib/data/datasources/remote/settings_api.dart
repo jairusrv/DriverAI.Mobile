@@ -40,6 +40,8 @@ class SettingsApi {
     required double minimumProfitPerKm,
     required double maxPickupDistance,
     required double maxTripDistance,
+    required String serviceType,
+    required String platform,
     String currency = 'CRC',
     String language = 'es',
   }) async {

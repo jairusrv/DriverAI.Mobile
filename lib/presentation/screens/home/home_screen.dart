@@ -171,8 +171,9 @@ class _HomeScreenState
         );
 
         OverlayService.showProfitabilityOverlay(
-          result,
-        );
+  result,
+  ride: rideData,
+);
 
         final profitPerKm =
             rideData.distanceKm > 0
@@ -190,9 +191,7 @@ class _HomeScreenState
                     .toDouble(),
             profit: result.netProfit,
             profitPerKm: profitPerKm,
-            decision: result.isProfitable
-                ? 'ACEPTAR'
-                : 'RECHAZAR',
+            decision: result.decision.name.toUpperCase(),
             sourceApp: rideData.provider,
           );
         } catch (e) {

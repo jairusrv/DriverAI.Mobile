@@ -32,6 +32,8 @@ class _UserConfigScreenState
   late TextEditingController _maxTripController;
 
   String _selectedFuelType = 'regular';
+  String _selectedServiceType = 'Driver';
+  String _selectedPlatform = 'Uber';
 
   bool _notificationsEnabled = true;
   bool _isLoading = true;
@@ -116,6 +118,12 @@ class _UserConfigScreenState
 
         _maxTripController.text =
             (data['maxTripDistance'] ?? 25).toString();
+        
+        _selectedServiceType =
+            data['serviceType'] ?? _selectedServiceType;
+        
+        _selectedPlatform =
+            data['platform'] ?? _selectedPlatform;
 
         final newParams = UserParameters(
           vehicleEfficiency: double.tryParse(
@@ -268,6 +276,10 @@ class _UserConfigScreenState
         minimumProfitPerKm: double.parse(
           _commissionController.text,
         ),
+        serviceType: _selectedServiceType,
+
+        platform: _selectedPlatform,
+
         maxPickupDistance: double.parse(
           _maxPickupController.text,
         ),
@@ -348,6 +360,192 @@ class _UserConfigScreenState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Card(
+  elevation: 3,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Padding(
+    padding: const EdgeInsets.all(18),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '📱 Tipo de servicio',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedServiceType = 'Delivery';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _selectedServiceType == 'Delivery'
+                          ? Colors.black87
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'DELIVERY',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _selectedServiceType == 'Delivery'
+                            ? Colors.white
+                            : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedServiceType = 'Driver';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _selectedServiceType == 'Driver'
+                          ? Colors.black87
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'DRIVER',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _selectedServiceType == 'Driver'
+                            ? Colors.white
+                            : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+const SizedBox(height: 20),
+Card(
+  elevation: 3,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Padding(
+    padding: const EdgeInsets.all(18),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '📱 Plataforma a configurar',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedPlatform = 'Uber';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _selectedPlatform == 'Uber'
+                          ? Colors.black87
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'UBER',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _selectedPlatform == 'Uber'
+                            ? Colors.white
+                            : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedPlatform = 'Didi';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _selectedPlatform == 'Didi'
+                          ? Colors.black87
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'DIDI',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _selectedPlatform == 'Didi'
+                            ? Colors.white
+                            : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+const SizedBox(height: 20),
             const Text(
               'Combustible',
               style: TextStyle(
