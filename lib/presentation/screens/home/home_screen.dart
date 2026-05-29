@@ -23,6 +23,7 @@ import '../history/history_screen.dart';
 
 import '../configuration/user_config_screen.dart';
 import '../stats/stats_screen.dart';
+import '../../../services/native_notification_service.dart';
 
 final recopeApiProvider = Provider(
   (ref) => RecopeApi(
@@ -317,6 +318,74 @@ class _HomeScreenState
     );
   },
 ),
+
+ListTile(
+  leading: const Icon(
+    Icons.bug_report,
+  ),
+  title: const Text(
+    'Probar última notificación',
+  ),
+  onTap: () async {
+    Navigator.pop(context);
+
+    final data =
+        await NativeNotificationService
+            .getLastNotification();
+
+    if (data == null ||
+        data['text'] == null) {
+      return;
+    }
+
+    ref
+        .read(
+          rideNotificationListenerProvider,
+        )
+        .processNotificationText(
+          provider:
+              data['provider'] ??
+                  'unknown',
+          text: data['text'],
+        );
+  },
+),
+
+ListTile(
+  leading: const Icon(Icons.play_arrow),
+  title: const Text('Simular Uber Driver'),
+  onTap: () {
+    Navigator.pop(context);
+
+    ref
+        .read(rideNotificationListenerProvider)
+        .simulateUberDriverOffer();
+  },
+),
+
+ListTile(
+  leading: const Icon(Icons.delivery_dining),
+  title: const Text('Simular Uber Delivery'),
+  onTap: () {
+    Navigator.pop(context);
+
+    ref
+        .read(rideNotificationListenerProvider)
+        .simulateUberDeliveryOffer();
+  },
+),
+
+ListTile(
+  leading: const Icon(Icons.local_taxi),
+  title: const Text('Simular DiDi'),
+  onTap: () {
+    Navigator.pop(context);
+
+    ref
+        .read(rideNotificationListenerProvider)
+        .simulateDidiOffer();
+  },
+),
           ListTile(
             leading: const Icon(
               Icons.home,
@@ -352,6 +421,20 @@ class _HomeScreenState
               context.goNamed('subscription');
             },
           ),
+          ListTile(
+  leading: const Icon(
+    Icons.notifications_active,
+  ),
+  title: const Text(
+    'Permiso de notificaciones',
+  ),
+  onTap: () async {
+    Navigator.pop(context);
+
+    await NativeNotificationService
+        .openNotificationSettings();
+  },
+),
           const Divider(),
           ListTile(
             leading: const Icon(
