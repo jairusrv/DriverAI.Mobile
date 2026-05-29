@@ -46,8 +46,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
   }
 
   double get _acceptableProfit {
-    final minimum =
-        double.tryParse(_commissionController.text) ?? 300;
+    final minimum = double.tryParse(_commissionController.text) ?? 300;
     return minimum * 0.75;
   }
 
@@ -67,9 +66,16 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
 
     _fuelPriceController = TextEditingController(text: '0');
 
+    _selectedVehicleType = params.vehicleType.isNotEmpty
+        ? params.vehicleType
+        : _selectedVehicleType;
+
+    final initialMaintenance = params.maintenanceCostPerKm > 0
+        ? params.maintenanceCostPerKm
+        : (_maintenanceByVehicleType[_selectedVehicleType] ?? 0);
+
     _maintenanceCostController = TextEditingController(
-      text: _maintenanceByVehicleType[_selectedVehicleType]!
-          .toStringAsFixed(0),
+      text: initialMaintenance.toStringAsFixed(0),
     );
 
     _maxPickupController = TextEditingController(text: '5');
@@ -125,13 +131,11 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
         _selectedVehicleType =
             data['vehicleType'] ?? _selectedVehicleType;
 
-        final maintenance =
-            data['maintenanceCostPerKm'] ??
-                _maintenanceByVehicleType[_selectedVehicleType] ??
-                30;
+        final maintenance = data['maintenanceCostPerKm'] ??
+            _maintenanceByVehicleType[_selectedVehicleType] ??
+            0;
 
-        _maintenanceCostController.text =
-            maintenance.toString();
+        _maintenanceCostController.text = maintenance.toString();
 
         final newParams = UserParameters(
           vehicleEfficiency: double.tryParse(
@@ -142,9 +146,13 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
                 _commissionController.text,
               ) ??
               300,
-          fixedCostPerTrip: 0,
           fuelType: _selectedFuelType,
           notificationsEnabled: _notificationsEnabled,
+          vehicleType: _selectedVehicleType,
+          maintenanceCostPerKm: double.tryParse(
+                _maintenanceCostController.text,
+              ) ??
+              0,
         );
 
         await ref
@@ -255,9 +263,12 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
       final newParams = UserParameters(
         vehicleEfficiency: double.parse(_efficiencyController.text),
         desiredCommission: double.parse(_commissionController.text),
-        fixedCostPerTrip: 0,
         fuelType: _selectedFuelType,
         notificationsEnabled: _notificationsEnabled,
+        vehicleType: _selectedVehicleType,
+        maintenanceCostPerKm: double.parse(
+          _maintenanceCostController.text,
+        ),
       );
 
       await ref
@@ -476,9 +487,22 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
               setState(() {
                 _selectedVehicleType = value;
                 _maintenanceCostController.text =
-                    _maintenanceByVehicleType[value]!
+                    (_maintenanceByVehicleType[value] ?? 0)
                         .toStringAsFixed(0);
               });
+
+              ref
+                  .read(userParametersProvider.notifier)
+                  .updateVehicleType(value);
+
+              ref
+                  .read(userParametersProvider.notifier)
+                  .updateMaintenanceCostPerKm(
+                    double.tryParse(
+                          _maintenanceCostController.text,
+                        ) ??
+                        0,
+                  );
             },
           ),
           const SizedBox(height: 14),
@@ -730,11 +754,13 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
               children: [
                 Icon(icon, color: Colors.black87),
                 const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],

@@ -7,9 +7,7 @@ import 'api_client.dart';
 
 class SettingsApi {
   final Dio _dio = ApiClient().dio;
-
-  final FlutterSecureStorage _storage =
-      const FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<int> _getUserId() async {
     final userId = await _storage.read(
@@ -17,9 +15,7 @@ class SettingsApi {
     );
 
     if (userId == null || userId.isEmpty) {
-      throw Exception(
-        'No hay usuario en sesión',
-      );
+      throw Exception('No hay usuario en sesión');
     }
 
     return int.parse(userId);
@@ -42,6 +38,8 @@ class SettingsApi {
     required double maxTripDistance,
     required String serviceType,
     required String platform,
+    required String vehicleType,
+    required double maintenanceCostPerKm,
     String currency = 'CRC',
     String language = 'es',
   }) async {
@@ -54,12 +52,13 @@ class SettingsApi {
         'fuelType': fuelType,
         'fuelPrice': fuelPrice,
         'kmPerLiter': kmPerLiter,
-        'minimumProfitPerKm':
-            minimumProfitPerKm,
-        'maxPickupDistance':
-            maxPickupDistance,
-        'maxTripDistance':
-            maxTripDistance,
+        'minimumProfitPerKm': minimumProfitPerKm,
+        'maxPickupDistance': maxPickupDistance,
+        'maxTripDistance': maxTripDistance,
+        'serviceType': serviceType,
+        'platform': platform,
+        'vehicleType': vehicleType,
+        'maintenanceCostPerKm': maintenanceCostPerKm,
         'currency': currency,
         'language': language,
       },

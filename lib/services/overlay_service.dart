@@ -9,137 +9,146 @@ class OverlayService {
     ProfitabilityResult result, {
     RideData? ride,
   }) {
-    final color =
-        _getDecisionColor(result.decision);
+    final color = _getDecisionColor(result.decision);
+    final title = _getDecisionTitle(result.decision);
+    final icon = _getDecisionIcon(result.decision);
 
-    final title =
-        _getDecisionTitle(result.decision);
+    late OverlaySupportEntry entry;
 
-    showOverlay(
+    entry = showOverlay(
       (context, t) {
         return Positioned(
-          top: 45,
-          left: 55,
-          right: 55,
+          top: 38,
+          left: 8,
+          right: 8,
           child: SafeArea(
             child: Material(
               color: Colors.transparent,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black
-                      .withOpacity(0.88),
-                  borderRadius:
-                      BorderRadius.circular(18),
-                  border: Border.all(
-                    color: color,
-                    width: 3,
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(
+                    maxWidth: 380,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color
-                          .withOpacity(0.35),
-                      blurRadius: 12,
-                      spreadRadius: 1,
+                  padding: const EdgeInsets.fromLTRB(
+                    12,
+                    10,
+                    8,
+                    10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF151515)
+                        .withOpacity(0.96),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: color,
+                      width: 2.5,
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize:
-                      MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .center,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 15,
-                            fontWeight:
-                                FontWeight.bold,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.35),
+                        blurRadius: 14,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Padding(
+                        padding:
+                            const EdgeInsets.only(right: 24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$title $icon ₡${result.profitPerKm.toStringAsFixed(0)} / km',
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (ride != null)
+                              Text(
+                                '[${ride.provider.toUpperCase()}] 🚗 ${ride.distanceKm.toStringAsFixed(1)} km | ⏱ ${ride.durationMinutes} min',
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            const SizedBox(height: 5),
+                            Text(
+                              '💵 Pago: ₡${ride?.fare.toStringAsFixed(0) ?? '-'} | 📊 Real: ₡${result.netProfit.toStringAsFixed(0)}',
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              '🔧 Reserva: ₡${result.maintenanceReserve.toStringAsFixed(0)} | ₡${result.maintenanceCostPerKm.toStringAsFixed(0)}/km',
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              result.recommendation,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10.5,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: -6,
+                        right: -4,
+                        child: GestureDetector(
+                          onTap: () => entry.dismiss(),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            alignment: Alignment.center,
+                            child: const Text(
+                              '×',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '₡ ${result.profitPerKm.toStringAsFixed(0)} / km',
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 24,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    if (ride != null)
-                      Text(
-                        '[${ride.provider.toUpperCase()}] 🚗 ${ride.distanceKm.toStringAsFixed(1)} km | ⏱ ${ride.durationMinutes} min',
-                        textAlign:
-                            TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight:
-                              FontWeight.w600,
-                        ),
                       ),
-
-                    const SizedBox(height: 4),
-
-                    Text(
-                      '💵 Tarifa: ₡${ride?.fare.toStringAsFixed(0) ?? '-'} | 📊 Ganancia: ₡${result.netProfit.toStringAsFixed(0)}',
-                      textAlign:
-                          TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    Text(
-                      '⛽ Costo: ₡${result.totalCost.toStringAsFixed(0)} | Margen: ${result.profitPercentage.toStringAsFixed(1)}%',
-                      textAlign:
-                          TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    Text(
-                      result.recommendation,
-                      textAlign:
-                          TextAlign.center,
-                      maxLines: 2,
-                      overflow:
-                          TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         );
       },
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 12),
     );
   }
 
@@ -166,6 +175,19 @@ class OverlayService {
         return 'ACEPTABLE';
       case RideDecision.reject:
         return 'RECHAZAR';
+    }
+  }
+
+  static String _getDecisionIcon(
+    RideDecision decision,
+  ) {
+    switch (decision) {
+      case RideDecision.accept:
+        return '✓';
+      case RideDecision.acceptable:
+        return '!';
+      case RideDecision.reject:
+        return '✕';
     }
   }
 }

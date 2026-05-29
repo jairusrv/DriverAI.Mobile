@@ -1,56 +1,65 @@
 import 'package:equatable/equatable.dart';
 
-/// Parámetros de configuración del usuario para el cálculo de rentabilidad.
-/// Todos los valores monetarios están en Colones (CRC).
 class UserParameters extends Equatable {
-  final double vehicleEfficiency;    // Kilómetros por litro (km/L)
-  final double desiredCommission;    // Porcentaje de ganancia deseado (0-100)
-  final double fixedCostPerTrip;     // Costo fijo por viaje en colones (₡)
-  final String fuelType;             // "super", "diesel", "regular"
-  final bool notificationsEnabled;   // Si se debe mostrar el overlay automáticamente
+  final double vehicleEfficiency;
+  final double desiredCommission;
+  final String fuelType;
+  final bool notificationsEnabled;
+  final String vehicleType;
+  final double maintenanceCostPerKm;
 
   const UserParameters({
     this.vehicleEfficiency = 12.0,
-    this.desiredCommission = 20.0,
-    this.fixedCostPerTrip = 500.0,
-    this.fuelType = 'super',
+    this.desiredCommission = 300.0,
+    this.fuelType = 'regular',
     this.notificationsEnabled = true,
+    this.vehicleType = '',
+    this.maintenanceCostPerKm = 0.0,
   });
 
-  /// Convierte a Map para guardar en SharedPreferences
   Map<String, dynamic> toJson() => {
         'vehicleEfficiency': vehicleEfficiency,
         'desiredCommission': desiredCommission,
-        'fixedCostPerTrip': fixedCostPerTrip,
         'fuelType': fuelType,
         'notificationsEnabled': notificationsEnabled,
+        'vehicleType': vehicleType,
+        'maintenanceCostPerKm': maintenanceCostPerKm,
       };
 
-  /// Crea una instancia desde un Map (cargado desde SharedPreferences)
   factory UserParameters.fromJson(Map<String, dynamic> json) {
     return UserParameters(
-      vehicleEfficiency: (json['vehicleEfficiency'] ?? 12.0).toDouble(),
-      desiredCommission: (json['desiredCommission'] ?? 20.0).toDouble(),
-      fixedCostPerTrip: (json['fixedCostPerTrip'] ?? 500.0).toDouble(),
-      fuelType: json['fuelType'] ?? 'super',
-      notificationsEnabled: json['notificationsEnabled'] ?? true,
+      vehicleEfficiency:
+          (json['vehicleEfficiency'] ?? 12.0).toDouble(),
+      desiredCommission:
+          (json['desiredCommission'] ?? 300.0).toDouble(),
+      fuelType: json['fuelType'] ?? 'regular',
+      notificationsEnabled:
+          json['notificationsEnabled'] ?? true,
+      vehicleType: json['vehicleType'] ?? '',
+      maintenanceCostPerKm:
+          (json['maintenanceCostPerKm'] ?? 0.0).toDouble(),
     );
   }
 
-  /// Método copyWith para actualizar parámetros de forma inmutable
   UserParameters copyWith({
     double? vehicleEfficiency,
     double? desiredCommission,
-    double? fixedCostPerTrip,
     String? fuelType,
     bool? notificationsEnabled,
+    String? vehicleType,
+    double? maintenanceCostPerKm,
   }) {
     return UserParameters(
-      vehicleEfficiency: vehicleEfficiency ?? this.vehicleEfficiency,
-      desiredCommission: desiredCommission ?? this.desiredCommission,
-      fixedCostPerTrip: fixedCostPerTrip ?? this.fixedCostPerTrip,
+      vehicleEfficiency:
+          vehicleEfficiency ?? this.vehicleEfficiency,
+      desiredCommission:
+          desiredCommission ?? this.desiredCommission,
       fuelType: fuelType ?? this.fuelType,
-      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      notificationsEnabled:
+          notificationsEnabled ?? this.notificationsEnabled,
+      vehicleType: vehicleType ?? this.vehicleType,
+      maintenanceCostPerKm:
+          maintenanceCostPerKm ?? this.maintenanceCostPerKm,
     );
   }
 
@@ -58,8 +67,9 @@ class UserParameters extends Equatable {
   List<Object?> get props => [
         vehicleEfficiency,
         desiredCommission,
-        fixedCostPerTrip,
         fuelType,
         notificationsEnabled,
+        vehicleType,
+        maintenanceCostPerKm,
       ];
 }

@@ -15,6 +15,8 @@ class ProfitabilityResult {
   final double fuelCost;
   final double totalCost;
   final double profitPerKm;
+  final double maintenanceReserve;
+  final double maintenanceCostPerKm;
   final String recommendation;
 
   ProfitabilityResult({
@@ -25,6 +27,8 @@ class ProfitabilityResult {
     required this.fuelCost,
     required this.totalCost,
     required this.profitPerKm,
+    required this.maintenanceReserve,
+    required this.maintenanceCostPerKm,
     required this.recommendation,
   });
 }
@@ -35,76 +39,57 @@ class ProfitabilityCalculator {
     required double fuelPricePerLiter,
     required UserParameters params,
   }) {
-    final distanceKm =
-        ride.distanceKm <= 0 ? 1.0 : ride.distanceKm;
+    final distanceKm = ride.distanceKm <= 0 ? 1.0 : ride.distanceKm;
 
-    final vehicleEfficiency =
-        params.vehicleEfficiency <= 0
-            ? 10.0
-            : params.vehicleEfficiency;
+    final minimumProfitPerKm = params.desiredCommission <= 0
+        ? 300.0
+        : params.desiredCommission;
 
-    final litersNeeded =
-        distanceKm / vehicleEfficiency;
+    final acceptableProfitPerKm = minimumProfitPerKm * 0.75;
 
-    final fuelCost =
-        litersNeeded * fuelPricePerLiter;
+    final maintenanceCostPerKm =
+        params.maintenanceCostPerKm < 0
+            ? 0.0
+            : params.maintenanceCostPerKm;
 
-    const timeCostPerMinute = 30.0;
+    final maintenanceReserve =
+        distanceKm * maintenanceCostPerKm;
 
-    final timeCost =
-        ride.durationMinutes * timeCostPerMinute;
+    final netProfit = ride.fare - maintenanceReserve;
 
-    final fixedCost =
-        params.fixedCostPerTrip;
+    final profitPerKm = netProfit / distanceKm;
 
-    final totalCost =
-        fuelCost + timeCost + fixedCost;
-
-    final netProfit =
-        ride.fare - totalCost;
-
-    final profitPercentage =
-        ride.fare > 0
-            ? (netProfit / ride.fare) * 100
-            : 0.0;
-
-    final profitPerKm =
-        netProfit / distanceKm;
-
-    final idealProfitPerKm =
-        params.desiredCommission;
-
-    final acceptableProfitPerKm =
-        idealProfitPerKm * 0.75;
+    final profitPercentage = ride.fare > 0
+        ? (netProfit / ride.fare) * 100
+        : 0.0;
 
     late RideDecision decision;
     late String recommendation;
 
-    if (profitPerKm >= idealProfitPerKm &&
-        netProfit > 0) {
+    if (profitPerKm >= minimumProfitPerKm) {
       decision = RideDecision.accept;
       recommendation =
-          'ACEPTAR. Cumple el objetivo ideal de ₡${idealProfitPerKm.toStringAsFixed(0)}/km.';
-    } else if (profitPerKm >= acceptableProfitPerKm &&
-        netProfit > 0) {
+          'ACEPTAR. Supera la meta de ₡${minimumProfitPerKm.toStringAsFixed(0)}/km.';
+    } else if (profitPerKm >= acceptableProfitPerKm) {
       decision = RideDecision.acceptable;
       recommendation =
-          'ACEPTABLE. Está por debajo del ideal, pero aún genera ganancia.';
+          'ACEPTABLE. Está sobre el 75% de la meta mínima.';
     } else {
       decision = RideDecision.reject;
       recommendation =
-          'RECHAZAR. No cumple el mínimo aceptable de rentabilidad.';
+          'RECHAZAR. No alcanza el mínimo aceptable de ₡${acceptableProfitPerKm.toStringAsFixed(0)}/km.';
     }
 
     return ProfitabilityResult(
-      isProfitable:
-          decision != RideDecision.reject,
+      isProfitable: decision != RideDecision.reject,
       decision: decision,
       netProfit: netProfit,
       profitPercentage: profitPercentage,
-      fuelCost: fuelCost,
-      totalCost: totalCost,
+      fuelCost: 0.0,
+      totalCost: maintenanceReserve,
       profitPerKm: profitPerKm,
+      maintenanceReserve: maintenanceReserve,
+      maintenanceCostPerKm: maintenanceCostPerKm,
       recommendation: recommendation,
     );
   }
