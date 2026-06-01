@@ -28,11 +28,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final request = RegisterRequest(
-        imei: imei,
         phoneNumber: phoneNumber,
         email: email,
         username: username,
         password: password,
+        imei: imei,
+        referralCode: referralCode,
       );
 
       final response = await authApi.register(request);
