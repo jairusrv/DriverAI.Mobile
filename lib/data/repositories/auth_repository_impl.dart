@@ -24,6 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String username,
     required String password,
     required String imei,
+    String? referralCode,
   }) async {
     try {
       final request = RegisterRequest(

@@ -8,6 +8,7 @@ abstract class AuthRepository {
     required String username,
     required String password,
     required String imei,
+    String? referralCode,
   });
 
   Future<Either<Failure, Map<String, dynamic>>> verifyCode({

@@ -87,6 +87,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String username,
     required String password,
     required String imei,
+    String? referralCode,
   }) async {
     state = const AuthState.loading();
     final result = await _registerUseCase(

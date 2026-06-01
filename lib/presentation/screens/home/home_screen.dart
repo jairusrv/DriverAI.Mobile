@@ -24,6 +24,8 @@ import '../history/history_screen.dart';
 import '../configuration/user_config_screen.dart';
 import '../stats/stats_screen.dart';
 import '../../../services/native_notification_service.dart';
+import '../subscription/subscription_status_screen.dart';
+
 
 final recopeApiProvider = Provider(
   (ref) => RecopeApi(
@@ -410,6 +412,25 @@ ListTile(
               _openSettings();
             },
           ),
+          ListTile(
+  leading: const Icon(
+    Icons.verified_user,
+  ),
+  title: const Text(
+    'Estado de suscripción',
+  ),
+  onTap: () {
+    Navigator.pop(context);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SubscriptionStatusScreen(),
+      ),
+    );
+  },
+),
+
           ListTile(
             leading: const Icon(
               Icons.payment,

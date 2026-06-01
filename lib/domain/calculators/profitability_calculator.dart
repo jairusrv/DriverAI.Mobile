@@ -67,13 +67,13 @@ class ProfitabilityCalculator {
 
     if (profitPerKm >= minimumProfitPerKm) {
       decision = RideDecision.accept;
-      recommendation = 'ACEPTAR';
+      recommendation = 'El Monto Por Km es superior a ₡${minimumProfitPerKm.toStringAsFixed(0)}/km.';
     } else if (profitPerKm >= acceptableProfitPerKm) {
       decision = RideDecision.acceptable;
-      recommendation = 'ACEPTABLE';
+      recommendation = 'El monto por Km es muy cercano a ₡${minimumProfitPerKm.toStringAsFixed(0)}/km.';
     } else {
       decision = RideDecision.reject;
-      recommendation = 'RECHAZAR';
+      recommendation = 'El monto por Km es menor a ₡${minimumProfitPerKm.toStringAsFixed(0)}/km.';
     }
 
     final pickupDistanceExceeded = maxPickupDistance > 0 &&

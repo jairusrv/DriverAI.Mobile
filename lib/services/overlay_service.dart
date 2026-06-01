@@ -16,8 +16,8 @@ class OverlayService {
       (context, t) {
         return Positioned(
           top: 38,
-          left: 56,
-          right: 56,
+          left: 52,
+          right: 52,
           child: SafeArea(
             child: Material(
               color: Colors.transparent,
@@ -27,7 +27,7 @@ class OverlayService {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111111).withOpacity(0.94),
+                  color: const Color(0xFF151515).withOpacity(0.96),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: color,
@@ -35,9 +35,9 @@ class OverlayService {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.40),
-                      blurRadius: 16,
-                      spreadRadius: 1.5,
+                      color: color.withOpacity(0.45),
+                      blurRadius: 18,
+                      spreadRadius: 2,
                     ),
                   ],
                 ),
@@ -49,9 +49,9 @@ class OverlayService {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: color,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.6,
+                        letterSpacing: 0.4,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -60,7 +60,7 @@ class OverlayService {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: color,
-                        fontSize: 26,
+                        fontSize: 25,
                         fontWeight: FontWeight.w900,
                         height: 1.05,
                       ),
@@ -86,7 +86,7 @@ class OverlayService {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       result.recommendation,
                       textAlign: TextAlign.center,
@@ -94,8 +94,9 @@ class OverlayService {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 11,
+                        fontSize: 11.5,
                         fontWeight: FontWeight.w600,
+                        height: 1.18,
                       ),
                     ),
                   ],
@@ -105,7 +106,7 @@ class OverlayService {
           ),
         );
       },
-      duration: const Duration(seconds: 8),
+      duration: const Duration(seconds: 9),
     );
   }
 
