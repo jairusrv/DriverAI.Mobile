@@ -164,12 +164,13 @@ class _HomeScreenState
           profitabilityCalculatorProvider,
         );
 
-        final result =
-            calculator.calculate(
-          ride: rideData,
-          fuelPricePerLiter: fuelPrice,
-          params: userParams,
-        );
+        final result = calculator.calculate(
+  ride: rideData,
+  fuelPricePerLiter: fuelPrice,
+  params: userParams,
+  maxPickupDistance: userParams.maxPickupDistance,
+  maxTripDistance: userParams.maxTripDistance,
+);
 
         OverlayService.showProfitabilityOverlay(
   result,
@@ -186,7 +187,7 @@ class _HomeScreenState
           await HistoryApi().saveRide(
             fare: rideData.fare,
             distanceKm: rideData.distanceKm,
-            pickupDistanceKm: 0,
+            pickupDistanceKm: rideData.pickupDistanceKm,
             estimatedTimeMinutes:
                 rideData.durationMinutes
                     .toDouble(),

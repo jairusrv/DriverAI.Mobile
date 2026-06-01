@@ -9,19 +9,16 @@ final sharedPrefsDataSourceProvider = Provider(
   (ref) => SharedPreferencesDataSource(),
 );
 
-final userPreferencesRepositoryProvider = Provider(
-  (ref) {
-    return UserPreferencesRepositoryImpl(
-      ref.read(sharedPrefsDataSourceProvider),
-    );
-  },
-);
+final userPreferencesRepositoryProvider = Provider((ref) {
+  return UserPreferencesRepositoryImpl(
+    ref.read(sharedPrefsDataSourceProvider),
+  );
+});
 
 class UserParametersNotifier extends StateNotifier<UserParameters> {
   final UserPreferencesRepository _repository;
 
-  UserParametersNotifier(this._repository)
-      : super(const UserParameters()) {
+  UserParametersNotifier(this._repository) : super(const UserParameters()) {
     _loadParameters();
   }
 
@@ -34,63 +31,54 @@ class UserParametersNotifier extends StateNotifier<UserParameters> {
     );
   }
 
-  Future<void> saveParameters(
-    UserParameters newParams,
-  ) async {
+  Future<void> saveParameters(UserParameters newParams) async {
     state = newParams;
     await _repository.saveParameters(newParams);
   }
 
   void updateVehicleEfficiency(double value) {
-    state = state.copyWith(
-      vehicleEfficiency: value,
-    );
+    state = state.copyWith(vehicleEfficiency: value);
     _repository.saveParameters(state);
   }
 
   void updateDesiredCommission(double value) {
-    state = state.copyWith(
-      desiredCommission: value,
-    );
+    state = state.copyWith(desiredCommission: value);
     _repository.saveParameters(state);
   }
 
   void updateFuelType(String fuelType) {
-    state = state.copyWith(
-      fuelType: fuelType,
-    );
+    state = state.copyWith(fuelType: fuelType);
     _repository.saveParameters(state);
   }
 
   void updateVehicleType(String vehicleType) {
-    state = state.copyWith(
-      vehicleType: vehicleType,
-    );
+    state = state.copyWith(vehicleType: vehicleType);
     _repository.saveParameters(state);
   }
 
   void updateMaintenanceCostPerKm(double value) {
-    state = state.copyWith(
-      maintenanceCostPerKm: value,
-    );
+    state = state.copyWith(maintenanceCostPerKm: value);
+    _repository.saveParameters(state);
+  }
+
+  void updateMaxPickupDistance(double value) {
+    state = state.copyWith(maxPickupDistance: value);
+    _repository.saveParameters(state);
+  }
+
+  void updateMaxTripDistance(double value) {
+    state = state.copyWith(maxTripDistance: value);
     _repository.saveParameters(state);
   }
 
   void updateNotificationsEnabled(bool enabled) {
-    state = state.copyWith(
-      notificationsEnabled: enabled,
-    );
+    state = state.copyWith(notificationsEnabled: enabled);
     _repository.saveParameters(state);
   }
 }
 
 final userParametersProvider =
-    StateNotifierProvider<UserParametersNotifier, UserParameters>(
-  (ref) {
-    final repository = ref.read(
-      userPreferencesRepositoryProvider,
-    );
-
-    return UserParametersNotifier(repository);
-  },
-);
+    StateNotifierProvider<UserParametersNotifier, UserParameters>((ref) {
+  final repository = ref.read(userPreferencesRepositoryProvider);
+  return UserParametersNotifier(repository);
+});

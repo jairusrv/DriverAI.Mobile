@@ -7,6 +7,8 @@ class UserParameters extends Equatable {
   final bool notificationsEnabled;
   final String vehicleType;
   final double maintenanceCostPerKm;
+  final double maxPickupDistance;
+  final double maxTripDistance;
 
   const UserParameters({
     this.vehicleEfficiency = 12.0,
@@ -15,6 +17,8 @@ class UserParameters extends Equatable {
     this.notificationsEnabled = true,
     this.vehicleType = '',
     this.maintenanceCostPerKm = 0.0,
+    this.maxPickupDistance = 0.0,
+    this.maxTripDistance = 0.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -24,20 +28,20 @@ class UserParameters extends Equatable {
         'notificationsEnabled': notificationsEnabled,
         'vehicleType': vehicleType,
         'maintenanceCostPerKm': maintenanceCostPerKm,
+        'maxPickupDistance': maxPickupDistance,
+        'maxTripDistance': maxTripDistance,
       };
 
   factory UserParameters.fromJson(Map<String, dynamic> json) {
     return UserParameters(
-      vehicleEfficiency:
-          (json['vehicleEfficiency'] ?? 12.0).toDouble(),
-      desiredCommission:
-          (json['desiredCommission'] ?? 300.0).toDouble(),
+      vehicleEfficiency: (json['vehicleEfficiency'] ?? 12.0).toDouble(),
+      desiredCommission: (json['desiredCommission'] ?? 300.0).toDouble(),
       fuelType: json['fuelType'] ?? 'regular',
-      notificationsEnabled:
-          json['notificationsEnabled'] ?? true,
+      notificationsEnabled: json['notificationsEnabled'] ?? true,
       vehicleType: json['vehicleType'] ?? '',
-      maintenanceCostPerKm:
-          (json['maintenanceCostPerKm'] ?? 0.0).toDouble(),
+      maintenanceCostPerKm: (json['maintenanceCostPerKm'] ?? 0.0).toDouble(),
+      maxPickupDistance: (json['maxPickupDistance'] ?? 0.0).toDouble(),
+      maxTripDistance: (json['maxTripDistance'] ?? 0.0).toDouble(),
     );
   }
 
@@ -48,18 +52,18 @@ class UserParameters extends Equatable {
     bool? notificationsEnabled,
     String? vehicleType,
     double? maintenanceCostPerKm,
+    double? maxPickupDistance,
+    double? maxTripDistance,
   }) {
     return UserParameters(
-      vehicleEfficiency:
-          vehicleEfficiency ?? this.vehicleEfficiency,
-      desiredCommission:
-          desiredCommission ?? this.desiredCommission,
+      vehicleEfficiency: vehicleEfficiency ?? this.vehicleEfficiency,
+      desiredCommission: desiredCommission ?? this.desiredCommission,
       fuelType: fuelType ?? this.fuelType,
-      notificationsEnabled:
-          notificationsEnabled ?? this.notificationsEnabled,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       vehicleType: vehicleType ?? this.vehicleType,
-      maintenanceCostPerKm:
-          maintenanceCostPerKm ?? this.maintenanceCostPerKm,
+      maintenanceCostPerKm: maintenanceCostPerKm ?? this.maintenanceCostPerKm,
+      maxPickupDistance: maxPickupDistance ?? this.maxPickupDistance,
+      maxTripDistance: maxTripDistance ?? this.maxTripDistance,
     );
   }
 
@@ -71,5 +75,7 @@ class UserParameters extends Equatable {
         notificationsEnabled,
         vehicleType,
         maintenanceCostPerKm,
+        maxPickupDistance,
+        maxTripDistance,
       ];
 }

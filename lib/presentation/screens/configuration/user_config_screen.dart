@@ -137,22 +137,16 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
 
         _maintenanceCostController.text = maintenance.toString();
 
-        final newParams = UserParameters(
-          vehicleEfficiency: double.tryParse(
-                _efficiencyController.text,
-              ) ??
-              12,
-          desiredCommission: double.tryParse(
-                _commissionController.text,
-              ) ??
-              300,
+        final newParams = UserParameters
+        (
+          vehicleEfficiency: double.tryParse(_efficiencyController.text) ?? 12,
+          desiredCommission: double.tryParse(_commissionController.text) ?? 300,
           fuelType: _selectedFuelType,
           notificationsEnabled: _notificationsEnabled,
           vehicleType: _selectedVehicleType,
-          maintenanceCostPerKm: double.tryParse(
-                _maintenanceCostController.text,
-              ) ??
-              0,
+          maintenanceCostPerKm: double.tryParse(_maintenanceCostController.text) ?? 0,
+          maxPickupDistance: double.tryParse(_maxPickupController.text) ?? 0,
+          maxTripDistance: double.tryParse(_maxTripController.text) ?? 0,
         );
 
         await ref
@@ -260,16 +254,17 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
     });
 
     try {
-      final newParams = UserParameters(
+      final newParams = UserParameters
+      (
         vehicleEfficiency: double.parse(_efficiencyController.text),
         desiredCommission: double.parse(_commissionController.text),
         fuelType: _selectedFuelType,
         notificationsEnabled: _notificationsEnabled,
         vehicleType: _selectedVehicleType,
-        maintenanceCostPerKm: double.parse(
-          _maintenanceCostController.text,
-        ),
-      );
+        maintenanceCostPerKm: double.parse(_maintenanceCostController.text),
+        maxPickupDistance: double.parse(_maxPickupController.text),
+        maxTripDistance: double.parse(_maxTripController.text),
+    );
 
       await ref
           .read(userParametersProvider.notifier)

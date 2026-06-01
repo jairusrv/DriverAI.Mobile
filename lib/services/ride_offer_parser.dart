@@ -40,17 +40,17 @@ class RideOfferParser {
       }
 
       return RideData(
-        rideId: 'ride_${DateTime.now().millisecondsSinceEpoch}',
-        provider: provider.toLowerCase(),
-        origin: 'Detectado',
-        destination: 'Detectado',
-        distanceKm: totalDistance,
-        pickupDistanceKm: pickupDistance,
-        tripDistanceKm: tripDistance,
-        durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
-        fare: fare,
-        timestamp: DateTime.now(),
-      );
+  rideId: 'ride_${DateTime.now().millisecondsSinceEpoch}',
+  provider: provider.toLowerCase(),
+  origin: 'Detectado',
+  destination: 'Detectado',
+  distanceKm: totalDistance,
+  pickupDistanceKm: isDelivery ? 0 : pickupDistance,
+  tripDistanceKm: isDelivery ? totalDistance : tripDistance,
+  durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
+  fare: fare,
+  timestamp: DateTime.now(),
+);
     } catch (_) {
       return null;
     }
