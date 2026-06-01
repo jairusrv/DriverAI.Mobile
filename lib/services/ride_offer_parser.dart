@@ -9,18 +9,22 @@ class RideOfferParser {
       final fare = _extractFare(text);
       final isDelivery = _isDeliveryOffer(text);
 
+      double pickupDistance = 0;
+      double tripDistance = 0;
       double totalDistance = 0;
       int durationMinutes = 0;
 
       if (isDelivery) {
         totalDistance = _extractDeliveryDistance(text);
+        tripDistance = totalDistance;
         durationMinutes = _extractDeliveryDuration(text);
       } else {
-        final pickupDistance = _extractPickupDistance(text);
-        final tripDistance = _extractTripDistance(text);
-        final tripDuration = _extractDriverTripDuration(text);
+        pickupDistance = _extractPickupDistance(text);
+        tripDistance = _extractTripDistance(text);
 
         totalDistance = pickupDistance + tripDistance;
+
+        final tripDuration = _extractDriverTripDuration(text);
 
         final pickupDuration = _estimatePickupDuration(
           pickupDistanceKm: pickupDistance,
@@ -41,6 +45,8 @@ class RideOfferParser {
         origin: 'Detectado',
         destination: 'Detectado',
         distanceKm: totalDistance,
+        pickupDistanceKm: pickupDistance,
+        tripDistanceKm: tripDistance,
         durationMinutes: durationMinutes > 0 ? durationMinutes : 1,
         fare: fare,
         timestamp: DateTime.now(),
@@ -50,17 +56,17 @@ class RideOfferParser {
     }
   }
 
-    static bool _isDeliveryOffer(String text) {
-  final normalized = text.toLowerCase();
+  static bool _isDeliveryOffer(String text) {
+    final normalized = text.toLowerCase();
 
-  if (normalized.contains('viaje:')) {
-    return false;
+    if (normalized.contains('viaje:')) {
+      return false;
+    }
+
+    return normalized.contains('entrega') ||
+        normalized.contains('pedido') ||
+        normalized.contains('total:');
   }
-
-  return normalized.contains('entrega') ||
-      normalized.contains('pedido') ||
-      normalized.contains('total:');
-}
 
   static double _extractFare(String text) {
     final regex = RegExp(
@@ -187,7 +193,8 @@ class RideOfferParser {
     final hourMatch = hourRegex.firstMatch(text);
 
     if (hourMatch != null) {
-      total += (int.tryParse(hourMatch.group(1) ?? '') ?? 0) * 60;
+      total +=
+          (int.tryParse(hourMatch.group(1) ?? '') ?? 0) * 60;
     }
 
     final minMatches = minRegex.allMatches(text);
@@ -201,7 +208,6 @@ class RideOfferParser {
 
   static double _parseNumber(String value) {
     var clean = value.trim();
-
     clean = clean.replaceAll(' ', '');
 
     if (clean.contains(',') && clean.contains('.')) {

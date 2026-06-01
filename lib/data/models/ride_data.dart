@@ -1,14 +1,17 @@
-// data/models/ride_data.dart
 import 'package:equatable/equatable.dart';
 
 class RideData extends Equatable {
   final String rideId;
-  final String provider; // "uber", "didi", "unknown"
+  final String provider;
   final String origin;
   final String destination;
-  final double distanceKm; // distancia en kilómetros
-  final int durationMinutes; // duración en minutos
-  final double fare; // en colones (₡)
+
+  final double distanceKm;
+  final double pickupDistanceKm;
+  final double tripDistanceKm;
+
+  final int durationMinutes;
+  final double fare;
   final DateTime timestamp;
 
   const RideData({
@@ -20,8 +23,17 @@ class RideData extends Equatable {
     required this.durationMinutes,
     required this.fare,
     required this.timestamp,
+    this.pickupDistanceKm = 0,
+    this.tripDistanceKm = 0,
   });
 
   @override
-  List<Object?> get props => [rideId, provider, fare];
+  List<Object?> get props => [
+        rideId,
+        provider,
+        fare,
+        distanceKm,
+        pickupDistanceKm,
+        tripDistanceKm,
+      ];
 }

@@ -10,6 +10,7 @@ import '../models/resend_code_request.dart';
 import '../models/resend_email_code_request.dart';
 import '../models/verify_code_request.dart';
 import '../models/verify_email_request.dart';
+import '../../services/error_log_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthApi authApi;
@@ -107,9 +108,15 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Left(AuthFailure(response.message));
-    } catch (e) {
-      return Left(_mapExceptionToFailure(e));
-    }
+    } catch (e, stackTrace) {
+  await ErrorLogService.logError(
+    source: 'mobile_login',
+    message: _technicalErrorMessage(e),
+    stackTrace: stackTrace.toString(),
+  );
+
+  return Left(_mapExceptionToFailure(e));
+}
   }
 
   @override
@@ -247,4 +254,14 @@ class AuthRepositoryImpl implements AuthRepository {
 
     return '';
   }
+  String _technicalErrorMessage(Object error) {
+  if (error is DioException) {
+    final statusCode = error.response?.statusCode;
+    final data = error.response?.data;
+
+    return 'DioException | status=$statusCode | data=$data';
+  }
+
+  return error.toString();
+}
 }
