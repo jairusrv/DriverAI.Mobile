@@ -264,6 +264,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
         maintenanceCostPerKm: double.parse(_maintenanceCostController.text),
         maxPickupDistance: double.parse(_maxPickupController.text),
         maxTripDistance: double.parse(_maxTripController.text),
+       
     );
 
       await ref
