@@ -32,28 +32,49 @@ class SubscriptionInfo {
   });
 
   factory SubscriptionInfo.fromJson(dynamic json) {
-    final data = json as Map<String, dynamic>;
+    final data = Map<String, dynamic>.from(json as Map);
+
+    final remainingTrialDays = _parseInt(
+      data['remainingTrialDays'],
+    );
+
+    final remainingDays = _parseInt(
+      data['remainingDays'] ?? data['remainingAccessDays'],
+      fallback: remainingTrialDays,
+    );
 
     return SubscriptionInfo(
-      hasAccess: data['hasAccess'] ?? false,
-      isInTrial: data['isInTrial'] ?? false,
-      remainingTrialDays: data['remainingTrialDays'] ?? 0,
-      remainingDays: data['remainingDays'] ?? 0,
-      isSubscriptionActive: data['isSubscriptionActive'] ?? false,
+      hasAccess: data['hasAccess'] == true,
+      isInTrial: data['isInTrial'] == true,
+      remainingTrialDays: remainingTrialDays,
+      remainingDays: remainingDays,
+      isSubscriptionActive: data['isSubscriptionActive'] == true,
       trialEndDate: _parseDate(data['trialEndDate']),
       subscriptionExpiryDate: _parseDate(
         data['subscriptionExpiryDate'],
       ),
       referralCode: data['referralCode']?.toString(),
       referredByCode: data['referredByCode']?.toString(),
-      referralPaidCount: data['referralPaidCount'] ?? 0,
-      referralRewardCount: data['referralRewardCount'] ?? 0,
-      referralsNeededForReward:
-          data['referralsNeededForReward'] ?? 5,
+      referralPaidCount: _parseInt(data['referralPaidCount']),
+      referralRewardCount: _parseInt(data['referralRewardCount']),
+      referralsNeededForReward: _parseInt(
+        data['referralsNeededForReward'],
+        fallback: 5,
+      ),
       lastReferralRewardMessage:
           data['lastReferralRewardMessage']?.toString(),
       message: data['message']?.toString() ?? '',
     );
+  }
+
+  static int _parseInt(dynamic value, {int fallback = 0}) {
+    if (value == null) return fallback;
+
+    if (value is int) return value;
+
+    if (value is double) return value.toInt();
+
+    return int.tryParse(value.toString()) ?? fallback;
   }
 
   static DateTime? _parseDate(dynamic value) {

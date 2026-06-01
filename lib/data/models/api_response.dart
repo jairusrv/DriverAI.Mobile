@@ -18,15 +18,24 @@ class ApiResponse<T> extends Equatable {
     T Function(dynamic) fromJsonT,
   ) {
     return ApiResponse<T>(
-      success: json['success'] as bool,
-      message: json['message'] as String,
+      success: json['success'] == true,
+      message: json['message']?.toString() ?? '',
       data: json['data'] != null ? fromJsonT(json['data']) : null,
       errors: json['errors'] != null
-          ? List<String>.from(json['errors'] as List)
+          ? List<String>.from(
+              (json['errors'] as List).map(
+                (e) => e.toString(),
+              ),
+            )
           : null,
     );
   }
 
   @override
-  List<Object?> get props => [success, message, data, errors];
+  List<Object?> get props => [
+        success,
+        message,
+        data,
+        errors,
+      ];
 }

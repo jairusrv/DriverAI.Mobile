@@ -35,9 +35,19 @@ class _SubscriptionStatusScreenState
     });
 
     try {
-      final phoneNumber = await _storage.read(
-        key: 'phone_number',
-      );
+      final phoneNumber =
+    await _storage.read(key: 'phone_number') ??
+    await _storage.read(key: 'phoneNumber') ??
+    await _storage.read(key: 'user_phone') ??
+    await _storage.read(key: 'phone');
+
+if (phoneNumber == null || phoneNumber.isEmpty) {
+  setState(() {
+    _error = 'No se encontró el teléfono de la sesión.';
+    _isLoading = false;
+  });
+  return;
+}
 
       if (phoneNumber == null || phoneNumber.isEmpty) {
         setState(() {
