@@ -8,12 +8,10 @@ class HistoryScreen extends StatefulWidget {
   });
 
   @override
-  State<HistoryScreen> createState() =>
-      _HistoryScreenState();
+  State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
-class _HistoryScreenState
-    extends State<HistoryScreen> {
+class _HistoryScreenState extends State<HistoryScreen> {
   bool _isLoading = true;
   String? _error;
 
@@ -35,24 +33,17 @@ class _HistoryScreenState
     try {
       final historyApi = HistoryApi();
 
-      final ridesResponse =
-          await historyApi.getMyHistory();
+      final ridesResponse = await historyApi.getMyHistory();
 
-      final summaryResponse =
-          await historyApi.getMySummary();
+      final summaryResponse = await historyApi.getMySummary();
 
       final ridesData = ridesResponse.data;
       final summaryData = summaryResponse.data;
 
       setState(() {
-        _rides = ridesData is List
-            ? ridesData
-            : [];
+        _rides = ridesData is List ? ridesData : [];
 
-        _summary = summaryData
-                is Map<String, dynamic>
-            ? summaryData
-            : {};
+        _summary = summaryData is Map<String, dynamic> ? summaryData : {};
 
         _isLoading = false;
       });
@@ -62,8 +53,7 @@ class _HistoryScreenState
       );
 
       setState(() {
-        _error =
-            'No se pudo cargar el historial';
+        _error = 'No se pudo cargar el historial';
         _isLoading = false;
       });
     }
@@ -78,8 +68,7 @@ class _HistoryScreenState
     return Expanded(
       child: Card(
         child: Padding(
-          padding:
-              const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Icon(
@@ -92,15 +81,13 @@ class _HistoryScreenState
                 value,
                 style: const TextStyle(
                   fontSize: 20,
-                  fontWeight:
-                      FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 5),
               Text(
                 title,
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12,
                 ),
@@ -145,33 +132,28 @@ class _HistoryScreenState
     if (_isLoading) {
       return const Scaffold(
         body: Center(
-          child:
-              CircularProgressIndicator(),
+          child: CircularProgressIndicator(),
         ),
       );
     }
 
     final totalTrips = _toInt(
-      _summary?['total'] ??
-          _summary?['totalTrips'],
+      _summary?['total'] ?? _summary?['totalTrips'],
     );
 
     final acceptedTrips = _toInt(
-      _summary?['accepted'] ??
-          _summary?['acceptedTrips'],
+      _summary?['accepted'] ?? _summary?['acceptedTrips'],
     );
 
     final rejectedTrips = _toInt(
-      _summary?['rejected'] ??
-          _summary?['rejectedTrips'],
+      _summary?['rejected'] ?? _summary?['rejectedTrips'],
     );
 
     final totalProfit = _toDouble(
       _summary?['totalProfit'],
     );
 
-    final averageProfitPerKm =
-        _toDouble(
+    final averageProfitPerKm = _toDouble(
       _summary?['averageProfitPerKm'],
     );
 
@@ -184,8 +166,7 @@ class _HistoryScreenState
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: ListView(
-          padding:
-              const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           children: [
             if (_error != null)
               Card(
@@ -198,56 +179,38 @@ class _HistoryScreenState
                   title: Text(_error!),
                 ),
               ),
-
             Row(
               children: [
                 _buildStatCard(
                   title: 'Viajes',
-                  value:
-                      totalTrips.toString(),
-                  icon:
-                      Icons.route,
-                  color:
-                      Colors.blue,
+                  value: totalTrips.toString(),
+                  icon: Icons.route,
+                  color: Colors.blue,
                 ),
                 _buildStatCard(
                   title: 'Aceptados',
-                  value:
-                      acceptedTrips
-                          .toString(),
-                  icon:
-                      Icons.check_circle,
-                  color:
-                      Colors.green,
+                  value: acceptedTrips.toString(),
+                  icon: Icons.check_circle,
+                  color: Colors.green,
                 ),
               ],
             ),
-
             Row(
               children: [
                 _buildStatCard(
                   title: 'Rechazados',
-                  value:
-                      rejectedTrips
-                          .toString(),
-                  icon:
-                      Icons.cancel,
-                  color:
-                      Colors.red,
+                  value: rejectedTrips.toString(),
+                  icon: Icons.cancel,
+                  color: Colors.red,
                 ),
                 _buildStatCard(
-                  title:
-                      'Ganancia Total',
-                  value:
-                      '₡${totalProfit.toStringAsFixed(0)}',
-                  icon:
-                      Icons.attach_money,
-                  color:
-                      Colors.orange,
+                  title: 'Ganancia Total',
+                  value: '₡${totalProfit.toStringAsFixed(0)}',
+                  icon: Icons.attach_money,
+                  color: Colors.orange,
                 ),
               ],
             ),
-
             Card(
               child: ListTile(
                 leading: const Icon(
@@ -261,40 +224,29 @@ class _HistoryScreenState
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Text(
               'Últimos viajes',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight:
-                    FontWeight.bold,
+                fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 10),
-
             if (_rides.isEmpty)
               const Center(
                 child: Padding(
-                  padding:
-                      EdgeInsets.all(32),
+                  padding: EdgeInsets.all(32),
                   child: Text(
                     'No hay viajes registrados',
                   ),
                 ),
               ),
-
             ..._rides.map(
               (ride) {
-                final decision =
-                    (ride['decision'] ?? '')
-                        .toString();
+                final decision = (ride['decision'] ?? '').toString();
 
-                final accepted =
-                    decision.toUpperCase() ==
-                        'ACEPTAR';
+                final accepted = decision.toUpperCase() == 'ACEPTAR';
 
                 final fare = _toDouble(
                   ride['fare'],
@@ -304,39 +256,28 @@ class _HistoryScreenState
                   ride['profit'],
                 );
 
-                final distanceKm =
-                    _toDouble(
+                final distanceKm = _toDouble(
                   ride['distanceKm'],
                 );
 
-                final profitPerKm =
-                    _toDouble(
+                final profitPerKm = _toDouble(
                   ride['profitPerKm'],
                 );
 
                 final sourceApp =
-                    (ride['sourceApp'] ??
-                            'Desconocido')
-                        .toString();
+                    (ride['sourceApp'] ?? 'Desconocido').toString();
 
                 return Card(
                   child: ListTile(
                     leading: Icon(
-                      accepted
-                          ? Icons
-                              .check_circle
-                          : Icons.cancel,
-                      color: accepted
-                          ? Colors.green
-                          : Colors.red,
+                      accepted ? Icons.check_circle : Icons.cancel,
+                      color: accepted ? Colors.green : Colors.red,
                     ),
                     title: Text(
                       '$sourceApp • ₡${fare.toStringAsFixed(0)}',
                     ),
                     subtitle: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Ganancia: ₡${profit.toStringAsFixed(0)}',
@@ -352,11 +293,8 @@ class _HistoryScreenState
                     trailing: Text(
                       decision,
                       style: TextStyle(
-                        color: accepted
-                            ? Colors.green
-                            : Colors.red,
-                        fontWeight:
-                            FontWeight.bold,
+                        color: accepted ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

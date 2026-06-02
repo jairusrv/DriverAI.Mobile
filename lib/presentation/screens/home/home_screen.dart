@@ -25,7 +25,7 @@ import '../configuration/user_config_screen.dart';
 import '../stats/stats_screen.dart';
 import '../../../services/native_notification_service.dart';
 import '../subscription/subscription_status_screen.dart';
-
+import '../admin/admin_payments_screen.dart';
 
 final recopeApiProvider = Provider(
   (ref) => RecopeApi(
@@ -51,15 +51,17 @@ class HomeScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<HomeScreen> createState() =>
-      _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState
-    extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasCheckedAccess = false;
   bool _hasAccess = true;
   String? _errorMessage;
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  bool _isAdmin = false;
 
   @override
   void initState() {
@@ -82,14 +84,19 @@ class _HomeScreenState
         return;
       }
 
+      final role = await storage.read(key: 'role');
+
+      setState(() {
+        _isAdmin = role?.toLowerCase() == 'admin';
+      });
+
       await SessionManager.initialize();
 
       final phoneNumber = await storage.read(
         key: 'phone_number',
       );
 
-      if (phoneNumber == null ||
-          phoneNumber.isEmpty) {
+      if (phoneNumber == null || phoneNumber.isEmpty) {
         setState(() {
           _hasCheckedAccess = true;
           _hasAccess = true;
@@ -100,16 +107,13 @@ class _HomeScreenState
       }
 
       try {
-        final api =
-            ref.read(subscriptionApiProvider);
+        final api = ref.read(subscriptionApiProvider);
 
-        final response =
-            await api.getSubscriptionStatus(
+        final response = await api.getSubscriptionStatus(
           phoneNumber,
         );
 
-        final hasAccess =
-            response.success &&
+        final hasAccess = response.success &&
             response.data != null &&
             response.data!.hasAccess;
 
@@ -134,8 +138,7 @@ class _HomeScreenState
       setState(() {
         _hasCheckedAccess = true;
         _hasAccess = true;
-        _errorMessage =
-            'Error inesperado, pero puedes continuar.';
+        _errorMessage = 'Error inesperado, pero puedes continuar.';
       });
 
       _setupNotificationListener();
@@ -147,18 +150,15 @@ class _HomeScreenState
       rideNotificationListenerProvider,
     );
 
-    listener.onRideDetected =
-        (rideData) async {
-      final userParams =
-          ref.read(userParametersProvider);
+    listener.onRideDetected = (rideData) async {
+      final userParams = ref.read(userParametersProvider);
 
       if (!userParams.notificationsEnabled) {
         return;
       }
 
       try {
-        final fuelPrice =
-            await SessionManager.getFuelPrice(
+        final fuelPrice = await SessionManager.getFuelPrice(
           userParams.fuelType,
         );
 
@@ -167,32 +167,28 @@ class _HomeScreenState
         );
 
         final result = calculator.calculate(
-  ride: rideData,
-  fuelPricePerLiter: fuelPrice,
-  params: userParams,
-  maxPickupDistance: userParams.maxPickupDistance,
-  maxTripDistance: userParams.maxTripDistance,
-);
+          ride: rideData,
+          fuelPricePerLiter: fuelPrice,
+          params: userParams,
+          maxPickupDistance: userParams.maxPickupDistance,
+          maxTripDistance: userParams.maxTripDistance,
+        );
 
         OverlayService.showProfitabilityOverlay(
-  result,
-  ride: rideData,
-);
+          result,
+          ride: rideData,
+        );
 
-        final profitPerKm =
-            rideData.distanceKm > 0
-                ? result.netProfit /
-                    rideData.distanceKm
-                : 0.0;
+        final profitPerKm = rideData.distanceKm > 0
+            ? result.netProfit / rideData.distanceKm
+            : 0.0;
 
         try {
           await HistoryApi().saveRide(
             fare: rideData.fare,
             distanceKm: rideData.distanceKm,
             pickupDistanceKm: rideData.pickupDistanceKm,
-            estimatedTimeMinutes:
-                rideData.durationMinutes
-                    .toDouble(),
+            estimatedTimeMinutes: rideData.durationMinutes.toDouble(),
             profit: result.netProfit,
             profitPerKm: profitPerKm,
             decision: result.decision.name.toUpperCase(),
@@ -228,9 +224,7 @@ class _HomeScreenState
   }
 
   Future<void> _logout() async {
-    await ref
-        .read(authNotifierProvider.notifier)
-        .logout();
+    await ref.read(authNotifierProvider.notifier).logout();
 
     if (mounted) {
       context.goNamed('login');
@@ -241,8 +235,7 @@ class _HomeScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            const UserConfigScreen(),
+        builder: (_) => const UserConfigScreen(),
       ),
     );
   }
@@ -257,10 +250,8 @@ class _HomeScreenState
               color: Colors.blue,
             ),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              mainAxisAlignment:
-                  MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Icon(
                   Icons.local_taxi,
@@ -273,122 +264,114 @@ class _HomeScreenState
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 26,
-                    fontWeight:
-                        FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-          
+
           ///*      ///
           ListTile(
-  leading: const Icon(
-    Icons.bar_chart,
-  ),
-  title: const Text(
-    'Estadísticas',
-  ),
-  onTap: () {
-    Navigator.pop(context);
+            leading: const Icon(
+              Icons.bar_chart,
+            ),
+            title: const Text(
+              'Estadísticas',
+            ),
+            onTap: () {
+              Navigator.pop(context);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const StatsScreen(),
-      ),
-    );
-  },
-),
-///*      ///
-          ListTile(
-          leading: const Icon(
-          Icons.history,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const StatsScreen(),
+                ),
+              );
+            },
           ),
-          title: const Text(
-          'Historial',
-        ),
-  onTap: () {
-    Navigator.pop(context);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const HistoryScreen(),
-      ),
-    );
-  },
-),
+          ///*      ///
+          ListTile(
+            leading: const Icon(
+              Icons.history,
+            ),
+            title: const Text(
+              'Historial',
+            ),
+            onTap: () {
+              Navigator.pop(context);
 
-ListTile(
-  leading: const Icon(
-    Icons.bug_report,
-  ),
-  title: const Text(
-    'Probar última notificación',
-  ),
-  onTap: () async {
-    Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const HistoryScreen(),
+                ),
+              );
+            },
+          ),
 
-    final data =
-        await NativeNotificationService
-            .getLastNotification();
+          ListTile(
+            leading: const Icon(
+              Icons.bug_report,
+            ),
+            title: const Text(
+              'Probar última notificación',
+            ),
+            onTap: () async {
+              Navigator.pop(context);
 
-    if (data == null ||
-        data['text'] == null) {
-      return;
-    }
+              final data =
+                  await NativeNotificationService.getLastNotification();
 
-    ref
-        .read(
-          rideNotificationListenerProvider,
-        )
-        .processNotificationText(
-          provider:
-              data['provider'] ??
-                  'unknown',
-          text: data['text'],
-        );
-  },
-),
+              if (data == null || data['text'] == null) {
+                return;
+              }
 
-ListTile(
-  leading: const Icon(Icons.play_arrow),
-  title: const Text('Simular Uber Driver'),
-  onTap: () {
-    Navigator.pop(context);
+              ref
+                  .read(
+                    rideNotificationListenerProvider,
+                  )
+                  .processNotificationText(
+                    provider: data['provider'] ?? 'unknown',
+                    text: data['text'],
+                  );
+            },
+          ),
 
-    ref
-        .read(rideNotificationListenerProvider)
-        .simulateUberDriverOffer();
-  },
-),
+          ListTile(
+            leading: const Icon(Icons.play_arrow),
+            title: const Text('Simular Uber Driver'),
+            onTap: () {
+              Navigator.pop(context);
 
-ListTile(
-  leading: const Icon(Icons.delivery_dining),
-  title: const Text('Simular Uber Delivery'),
-  onTap: () {
-    Navigator.pop(context);
+              ref
+                  .read(rideNotificationListenerProvider)
+                  .simulateUberDriverOffer();
+            },
+          ),
 
-    ref
-        .read(rideNotificationListenerProvider)
-        .simulateUberDeliveryOffer();
-  },
-),
+          ListTile(
+            leading: const Icon(Icons.delivery_dining),
+            title: const Text('Simular Uber Delivery'),
+            onTap: () {
+              Navigator.pop(context);
 
-ListTile(
-  leading: const Icon(Icons.local_taxi),
-  title: const Text('Simular DiDi'),
-  onTap: () {
-    Navigator.pop(context);
+              ref
+                  .read(rideNotificationListenerProvider)
+                  .simulateUberDeliveryOffer();
+            },
+          ),
 
-    ref
-        .read(rideNotificationListenerProvider)
-        .simulateDidiOffer();
-  },
-),
+          ListTile(
+            leading: const Icon(Icons.local_taxi),
+            title: const Text('Simular DiDi'),
+            onTap: () {
+              Navigator.pop(context);
+
+              ref.read(rideNotificationListenerProvider).simulateDidiOffer();
+            },
+          ),
           ListTile(
             leading: const Icon(
               Icons.home,
@@ -413,23 +396,23 @@ ListTile(
             },
           ),
           ListTile(
-  leading: const Icon(
-    Icons.verified_user,
-  ),
-  title: const Text(
-    'Estado de suscripción',
-  ),
-  onTap: () {
-    Navigator.pop(context);
+            leading: const Icon(
+              Icons.verified_user,
+            ),
+            title: const Text(
+              'Estado de suscripción',
+            ),
+            onTap: () {
+              Navigator.pop(context);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const SubscriptionStatusScreen(),
-      ),
-    );
-  },
-),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SubscriptionStatusScreen(),
+                ),
+              );
+            },
+          ),
 
           ListTile(
             leading: const Icon(
@@ -444,19 +427,41 @@ ListTile(
             },
           ),
           ListTile(
-  leading: const Icon(
-    Icons.notifications_active,
-  ),
-  title: const Text(
-    'Permiso de notificaciones',
-  ),
-  onTap: () async {
-    Navigator.pop(context);
+            leading: const Icon(
+              Icons.notifications_active,
+            ),
+            title: const Text(
+              'Permiso de notificaciones',
+            ),
+            onTap: () async {
+              Navigator.pop(context);
 
-    await NativeNotificationService
-        .openNotificationSettings();
-  },
-),
+              await NativeNotificationService.openNotificationSettings();
+            },
+          ),
+          if (_isAdmin)
+            ListTile(
+              leading: const Icon(
+                Icons.admin_panel_settings,
+                color: Colors.deepPurple,
+              ),
+              title: const Text(
+                'Admin pagos SINPE',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminPaymentsScreen(),
+                  ),
+                );
+              },
+            ),
           const Divider(),
           ListTile(
             leading: const Icon(
@@ -484,8 +489,7 @@ ListTile(
     if (!_hasCheckedAccess) {
       return const Scaffold(
         body: Center(
-          child:
-              CircularProgressIndicator(),
+          child: CircularProgressIndicator(),
         ),
       );
     }
@@ -500,8 +504,7 @@ ListTile(
         drawer: _buildDrawer(),
         body: Center(
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
                 Icons.lock,
@@ -526,8 +529,7 @@ ListTile(
                 height: 20,
               ),
               ElevatedButton(
-                onPressed: () =>
-                    context.goNamed(
+                onPressed: () => context.goNamed(
                   'subscription',
                 ),
                 child: const Text(
@@ -560,8 +562,7 @@ ListTile(
           if (_errorMessage != null)
             Container(
               color: Colors.orange,
-              padding:
-                  const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               child: Text(
                 _errorMessage!,
                 style: const TextStyle(
@@ -572,17 +573,14 @@ ListTile(
           Expanded(
             child: Center(
               child: Padding(
-                padding:
-                    const EdgeInsets.all(
+                padding: const EdgeInsets.all(
                   24.0,
                 ),
                 child: Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons
-                          .notifications_active,
+                      Icons.notifications_active,
                       size: 80,
                       color: Colors.blue,
                     ),
@@ -591,43 +589,33 @@ ListTile(
                     ),
                     const Text(
                       'Esperando notificaciones de Uber/Didi...',
-                      textAlign:
-                          TextAlign.center,
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(
                       height: 10,
                     ),
                     const Text(
                       'Cuando llegue un viaje, aparecerá un overlay con el análisis.',
-                      textAlign:
-                          TextAlign.center,
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(
                       height: 30,
                     ),
                     ElevatedButton.icon(
-                      onPressed:
-                          _minimizeAndWait,
+                      onPressed: _minimizeAndWait,
                       icon: const Icon(
                         Icons.phone_android,
                       ),
                       label: const Text(
                         'Esperar viajes',
                       ),
-                      style:
-                          ElevatedButton
-                              .styleFrom(
-                        padding:
-                            const EdgeInsets
-                                .symmetric(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 12,
                         ),
-                        shape:
-                            RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
                             30,
                           ),
                         ),
@@ -638,8 +626,7 @@ ListTile(
                     ),
                     const Text(
                       'Presiona "Esperar viajes" para minimizar la app.\nSeguiremos escuchando notificaciones.',
-                      textAlign:
-                          TextAlign.center,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,

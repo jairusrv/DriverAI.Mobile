@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../widgets/common/custom_button.dart';
 import '../../../widgets/common/custom_text_field.dart';
 
-final profitabilityConfigProvider = StateNotifierProvider<ProfitabilityConfigNotifier, Map<String, double>>((ref) {
+final profitabilityConfigProvider =
+    StateNotifierProvider<ProfitabilityConfigNotifier, Map<String, double>>(
+        (ref) {
   return ProfitabilityConfigNotifier();
 });
 
 class ProfitabilityConfigNotifier extends StateNotifier<Map<String, double>> {
-  ProfitabilityConfigNotifier() : super({'vehicleEfficiency': 12.0, 'desiredCommission': 30.0});
+  ProfitabilityConfigNotifier()
+      : super({'vehicleEfficiency': 12.0, 'desiredCommission': 30.0});
 
   void updateVehicleEfficiency(double value) {
     state = {...state, 'vehicleEfficiency': value};

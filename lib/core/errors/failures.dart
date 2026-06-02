@@ -37,5 +37,6 @@ class LocalStorageFailure extends Failure {
 
 class DeviceAlreadyExistsFailure extends Failure {
   final Map<String, dynamic>? data;
-  const DeviceAlreadyExistsFailure(String message, {this.data}) : super(message);
+  const DeviceAlreadyExistsFailure(String message, {this.data})
+      : super(message);
 }

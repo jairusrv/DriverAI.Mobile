@@ -53,7 +53,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('DriverAI', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              const Text('DriverAI',
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
               const SizedBox(height: 48),
               CustomTextField(
                 controller: _phoneController,

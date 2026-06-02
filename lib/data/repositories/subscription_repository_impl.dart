@@ -10,7 +10,8 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
   SubscriptionRepositoryImpl(this.api);
 
   @override
-  Future<Either<Failure, SubscriptionInfo>> getSubscriptionStatus(String phoneNumber) async {
+  Future<Either<Failure, SubscriptionInfo>> getSubscriptionStatus(
+      String phoneNumber) async {
     try {
       final response = await api.getSubscriptionStatus(phoneNumber);
       if (response.success && response.data != null) {
@@ -24,7 +25,8 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
   }
 
   @override
-  Future<Either<Failure, void>> activateSubscription(String phoneNumber, int months) async {
+  Future<Either<Failure, void>> activateSubscription(
+      String phoneNumber, int months) async {
     try {
       final response = await api.activateSubscription(phoneNumber, months);
       if (response.success) {

@@ -35,19 +35,18 @@ class _SubscriptionStatusScreenState
     });
 
     try {
-      final phoneNumber =
-    await _storage.read(key: 'phone_number') ??
-    await _storage.read(key: 'phoneNumber') ??
-    await _storage.read(key: 'user_phone') ??
-    await _storage.read(key: 'phone');
+      final phoneNumber = await _storage.read(key: 'phone_number') ??
+          await _storage.read(key: 'phoneNumber') ??
+          await _storage.read(key: 'user_phone') ??
+          await _storage.read(key: 'phone');
 
-if (phoneNumber == null || phoneNumber.isEmpty) {
-  setState(() {
-    _error = 'No se encontró el teléfono de la sesión.';
-    _isLoading = false;
-  });
-  return;
-}
+      if (phoneNumber == null || phoneNumber.isEmpty) {
+        setState(() {
+          _error = 'No se encontró el teléfono de la sesión.';
+          _isLoading = false;
+        });
+        return;
+      }
 
       if (phoneNumber == null || phoneNumber.isEmpty) {
         setState(() {
@@ -160,9 +159,7 @@ if (phoneNumber == null || phoneNumber.isEmpty) {
   }
 
   Widget _statusCard(SubscriptionInfo info) {
-    final statusText = info.hasAccess
-        ? 'Acceso activo'
-        : 'Suscripción vencida';
+    final statusText = info.hasAccess ? 'Acceso activo' : 'Suscripción vencida';
 
     final subtitle = info.isInTrial
         ? 'Estás usando tus 7 días gratis.'
@@ -177,12 +174,8 @@ if (phoneNumber == null || phoneNumber.isEmpty) {
           Row(
             children: [
               Icon(
-                info.hasAccess
-                    ? Icons.check_circle
-                    : Icons.lock,
-                color: info.hasAccess
-                    ? Colors.green
-                    : Colors.red,
+                info.hasAccess ? Icons.check_circle : Icons.lock,
+                color: info.hasAccess ? Colors.green : Colors.red,
                 size: 34,
               ),
               const SizedBox(width: 10),

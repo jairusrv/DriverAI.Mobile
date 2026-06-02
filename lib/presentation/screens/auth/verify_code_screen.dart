@@ -13,7 +13,8 @@ class VerifyCodeScreen extends ConsumerStatefulWidget {
 }
 
 class _VerifyCodeScreenState extends ConsumerState<VerifyCodeScreen> {
-  final List<TextEditingController> _codeControllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _codeControllers =
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isResending = false;
 
@@ -53,7 +54,9 @@ class _VerifyCodeScreenState extends ConsumerState<VerifyCodeScreen> {
 
   Future<void> _resendCode() async {
     setState(() => _isResending = true);
-    final success = await ref.read(authNotifierProvider.notifier).resendCode(widget.phoneNumber);
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .resendCode(widget.phoneNumber);
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -73,7 +76,9 @@ class _VerifyCodeScreenState extends ConsumerState<VerifyCodeScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Verificar código'), automaticallyImplyLeading: false),
+      appBar: AppBar(
+          title: const Text('Verificar código'),
+          automaticallyImplyLeading: false),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -115,7 +120,10 @@ class _VerifyCodeScreenState extends ConsumerState<VerifyCodeScreen> {
             TextButton(
               onPressed: _isResending ? null : _resendCode,
               child: _isResending
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Reenviar código'),
             ),
           ],

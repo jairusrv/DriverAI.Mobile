@@ -8,8 +8,7 @@ class RecopeApi {
 
   RecopeApi(this._dio);
 
-  Future<ApiResponse<List<FuelPrice>>>
-      getFuelPrices() async {
+  Future<ApiResponse<List<FuelPrice>>> getFuelPrices() async {
     final response = await _dio.get(
       '/api/recope/datos',
     );
@@ -42,8 +41,7 @@ class RecopeApi {
     );
   }
 
-  Future<ApiResponse<void>>
-      updatePrices() async {
+  Future<ApiResponse<void>> updatePrices() async {
     final response = await _dio.get(
       //'/api/recope/actualizar',
       '/api/Recope/datos',
@@ -52,17 +50,12 @@ class RecopeApi {
     final body = response.data;
 
     bool success = true;
-    String message =
-        'Precios actualizados';
+    String message = 'Precios actualizados';
 
     if (body is Map<String, dynamic>) {
-      success =
-          body['success'] == true ||
-              body['success'] == 'true';
+      success = body['success'] == true || body['success'] == 'true';
 
-      message =
-          body['message']?.toString() ??
-              message;
+      message = body['message']?.toString() ?? message;
     }
 
     return ApiResponse<void>(

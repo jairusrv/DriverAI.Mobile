@@ -38,17 +38,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_deviceId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error obteniendo identificador del dispositivo')),
+        const SnackBar(
+            content: Text('Error obteniendo identificador del dispositivo')),
       );
       return;
     }
     final result = await ref.read(authNotifierProvider.notifier).register(
-      phoneNumber: _phoneController.text.trim(),
-      email: _emailController.text.trim(),
-      username: _usernameController.text.trim(),
-      password: _passwordController.text,
-      imei: _deviceId,
-    );
+          phoneNumber: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          username: _usernameController.text.trim(),
+          password: _passwordController.text,
+          imei: _deviceId,
+        );
     if (mounted) {
       if (result != null) {
         context.goNamed('home');
@@ -56,7 +57,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         // El error ya está en el estado, se muestra un SnackBar
         final error = ref.read(authNotifierProvider).errorMessage;
         if (error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error)));
         }
       }
     }

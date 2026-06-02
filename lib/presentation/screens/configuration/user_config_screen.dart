@@ -41,8 +41,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
   };
 
   bool get _isManualFuelPrice {
-    return _selectedFuelType == 'gas_lp' ||
-        _selectedFuelType == 'electric';
+    return _selectedFuelType == 'gas_lp' || _selectedFuelType == 'electric';
   }
 
   double get _acceptableProfit {
@@ -110,26 +109,20 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
           data['fuelType'] ?? _selectedFuelType,
         );
 
-        _efficiencyController.text =
-            (data['kmPerLiter'] ?? 12).toString();
+        _efficiencyController.text = (data['kmPerLiter'] ?? 12).toString();
 
         _commissionController.text =
             (data['minimumProfitPerKm'] ?? 300).toString();
 
-        _maxPickupController.text =
-            (data['maxPickupDistance'] ?? 5).toString();
+        _maxPickupController.text = (data['maxPickupDistance'] ?? 5).toString();
 
-        _maxTripController.text =
-            (data['maxTripDistance'] ?? 25).toString();
+        _maxTripController.text = (data['maxTripDistance'] ?? 25).toString();
 
-        _selectedServiceType =
-            data['serviceType'] ?? _selectedServiceType;
+        _selectedServiceType = data['serviceType'] ?? _selectedServiceType;
 
-        _selectedPlatform =
-            data['platform'] ?? _selectedPlatform;
+        _selectedPlatform = data['platform'] ?? _selectedPlatform;
 
-        _selectedVehicleType =
-            data['vehicleType'] ?? _selectedVehicleType;
+        _selectedVehicleType = data['vehicleType'] ?? _selectedVehicleType;
 
         final maintenance = data['maintenanceCostPerKm'] ??
             _maintenanceByVehicleType[_selectedVehicleType] ??
@@ -137,14 +130,14 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
 
         _maintenanceCostController.text = maintenance.toString();
 
-        final newParams = UserParameters
-        (
+        final newParams = UserParameters(
           vehicleEfficiency: double.tryParse(_efficiencyController.text) ?? 12,
           desiredCommission: double.tryParse(_commissionController.text) ?? 300,
           fuelType: _selectedFuelType,
           notificationsEnabled: _notificationsEnabled,
           vehicleType: _selectedVehicleType,
-          maintenanceCostPerKm: double.tryParse(_maintenanceCostController.text) ?? 0,
+          maintenanceCostPerKm:
+              double.tryParse(_maintenanceCostController.text) ?? 0,
           maxPickupDistance: double.tryParse(_maxPickupController.text) ?? 0,
           maxTripDistance: double.tryParse(_maxTripController.text) ?? 0,
         );
@@ -203,18 +196,15 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
   String _normalizeFuelType(String value) {
     final normalized = value.toLowerCase().trim();
 
-    if (normalized.contains('super') ||
-        normalized.contains('súper')) {
+    if (normalized.contains('super') || normalized.contains('súper')) {
       return 'super';
     }
 
-    if (normalized.contains('regular') ||
-        normalized.contains('gasolina')) {
+    if (normalized.contains('regular') || normalized.contains('gasolina')) {
       return 'regular';
     }
 
-    if (normalized.contains('diesel') ||
-        normalized.contains('diésel')) {
+    if (normalized.contains('diesel') || normalized.contains('diésel')) {
       return 'diesel';
     }
 
@@ -254,8 +244,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
     });
 
     try {
-      final newParams = UserParameters
-      (
+      final newParams = UserParameters(
         vehicleEfficiency: double.parse(_efficiencyController.text),
         desiredCommission: double.parse(_commissionController.text),
         fuelType: _selectedFuelType,
@@ -264,12 +253,9 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
         maintenanceCostPerKm: double.parse(_maintenanceCostController.text),
         maxPickupDistance: double.parse(_maxPickupController.text),
         maxTripDistance: double.parse(_maxTripController.text),
-       
-    );
+      );
 
-      await ref
-          .read(userParametersProvider.notifier)
-          .saveParameters(newParams);
+      await ref.read(userParametersProvider.notifier).saveParameters(newParams);
 
       await SettingsApi().saveMySettings(
         fuelType: _selectedFuelType,
@@ -483,8 +469,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
               setState(() {
                 _selectedVehicleType = value;
                 _maintenanceCostController.text =
-                    (_maintenanceByVehicleType[value] ?? 0)
-                        .toStringAsFixed(0);
+                    (_maintenanceByVehicleType[value] ?? 0).toStringAsFixed(0);
               });
 
               ref
@@ -558,9 +543,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
                 _fuelPriceController.text = '';
               });
 
-              ref
-                  .read(userParametersProvider.notifier)
-                  .updateFuelType(value);
+              ref.read(userParametersProvider.notifier).updateFuelType(value);
 
               await _updateFuelPrice();
             },

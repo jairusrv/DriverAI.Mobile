@@ -9,7 +9,8 @@ final phoneNumberProvider = FutureProvider<String?>((ref) async {
   return await storage.read(key: 'phone_number');
 });
 
-final subscriptionStatusProvider = FutureProvider<SubscriptionInfo?>((ref) async {
+final subscriptionStatusProvider =
+    FutureProvider<SubscriptionInfo?>((ref) async {
   final phoneNumber = await ref.watch(phoneNumberProvider.future);
   if (phoneNumber == null) return null;
   final api = ref.read(subscriptionApiProvider);
@@ -37,7 +38,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     final phoneNumber = await storage.read(key: 'phone_number');
     if (phoneNumber != null) {
       final api = ref.read(subscriptionApiProvider);
-      final response = await api.activateSubscription(phoneNumber, _selectedMonths);
+      final response =
+          await api.activateSubscription(phoneNumber, _selectedMonths);
       if (response.success) {
         ref.invalidate(subscriptionStatusProvider);
         if (mounted) {
@@ -78,7 +80,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          info.hasAccess ? '✅ Acceso Activo' : '⛔ Acceso Bloqueado',
+                          info.hasAccess
+                              ? '✅ Acceso Activo'
+                              : '⛔ Acceso Bloqueado',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -87,11 +91,15 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         ),
                         const SizedBox(height: 8),
                         if (info.isInTrial)
-                          Text('Período de prueba: ${info.remainingTrialDays} días restantes'),
-                        if (info.isSubscriptionActive && info.subscriptionExpiryDate != null)
-                          Text('Suscripción activa hasta: ${_formatDate(info.subscriptionExpiryDate)}'),
+                          Text(
+                              'Período de prueba: ${info.remainingTrialDays} días restantes'),
+                        if (info.isSubscriptionActive &&
+                            info.subscriptionExpiryDate != null)
+                          Text(
+                              'Suscripción activa hasta: ${_formatDate(info.subscriptionExpiryDate)}'),
                         if (!info.hasAccess && !info.isInTrial)
-                          const Text('Tu período de prueba ha expirado. Activa una suscripción para continuar.'),
+                          const Text(
+                              'Tu período de prueba ha expirado. Activa una suscripción para continuar.'),
                         const SizedBox(height: 8),
                         if (info.message != null) Text(info.message!),
                       ],
@@ -99,15 +107,20 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text('Activar suscripción', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Activar suscripción',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int>(
                   value: _selectedMonths,
                   items: [1, 3, 6, 12].map((months) {
-                    return DropdownMenuItem(value: months, child: Text('$months mes(es)'));
+                    return DropdownMenuItem(
+                        value: months, child: Text('$months mes(es)'));
                   }).toList(),
-                  onChanged: (value) => setState(() => _selectedMonths = value!),
-                  decoration: const InputDecoration(labelText: 'Selecciona duración'),
+                  onChanged: (value) =>
+                      setState(() => _selectedMonths = value!),
+                  decoration:
+                      const InputDecoration(labelText: 'Selecciona duración'),
                 ),
                 const SizedBox(height: 16),
                 if (_isActivating)

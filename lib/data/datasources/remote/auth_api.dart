@@ -12,37 +12,50 @@ class AuthApi {
   AuthApi(this._dio);
 
   // Registro
-  Future<ApiResponse<Map<String, dynamic>>> register(RegisterRequest request) async {
-    final response = await _dio.post('/api/auth/register', data: request.toJson());
-    return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);
+  Future<ApiResponse<Map<String, dynamic>>> register(
+      RegisterRequest request) async {
+    final response =
+        await _dio.post('/api/auth/register', data: request.toJson());
+    return ApiResponse.fromJson(
+        response.data, (data) => data as Map<String, dynamic>);
   }
 
   // Verificación SMS
-  Future<ApiResponse<Map<String, dynamic>>> verifyCode(VerifyCodeRequest request) async {
-    final response = await _dio.post('/api/auth/verify-code', data: request.toJson());
-    return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);
+  Future<ApiResponse<Map<String, dynamic>>> verifyCode(
+      VerifyCodeRequest request) async {
+    final response =
+        await _dio.post('/api/auth/verify-code', data: request.toJson());
+    return ApiResponse.fromJson(
+        response.data, (data) => data as Map<String, dynamic>);
   }
 
   // Reenviar SMS
   Future<ApiResponse<void>> resendCode(ResendCodeRequest request) async {
-    final response = await _dio.post('/api/auth/resend-code', data: request.toJson());
+    final response =
+        await _dio.post('/api/auth/resend-code', data: request.toJson());
     return ApiResponse.fromJson(response.data, (_) => null);
   }
 
   // Login
   Future<ApiResponse<Map<String, dynamic>>> login(LoginRequest request) async {
     final response = await _dio.post('/api/auth/login', data: request.toJson());
-    return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);
+    return ApiResponse.fromJson(
+        response.data, (data) => data as Map<String, dynamic>);
   }
 
   // ========== MÉTODOS DE EMAIL (aunque el backend auto-verifique) ==========
-  Future<ApiResponse<Map<String, dynamic>>> verifyEmail(VerifyEmailRequest request) async {
-    final response = await _dio.post('/api/auth/verify-email', data: request.toJson());
-    return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);
+  Future<ApiResponse<Map<String, dynamic>>> verifyEmail(
+      VerifyEmailRequest request) async {
+    final response =
+        await _dio.post('/api/auth/verify-email', data: request.toJson());
+    return ApiResponse.fromJson(
+        response.data, (data) => data as Map<String, dynamic>);
   }
 
-  Future<ApiResponse<void>> resendEmailCode(ResendEmailCodeRequest request) async {
-    final response = await _dio.post('/api/auth/resend-email-code', data: request.toJson());
+  Future<ApiResponse<void>> resendEmailCode(
+      ResendEmailCodeRequest request) async {
+    final response =
+        await _dio.post('/api/auth/resend-email-code', data: request.toJson());
     return ApiResponse.fromJson(response.data, (_) => null);
   }
 }

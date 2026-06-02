@@ -15,7 +15,8 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
 }
 
 class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
-  final List<TextEditingController> _codeControllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _codeControllers =
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isResending = false;
 
@@ -65,7 +66,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   Future<void> _resendCode() async {
     setState(() => _isResending = true);
-    final success = await ref.read(authNotifierProvider.notifier).resendEmailCode(widget.email);
+    final success = await ref
+        .read(authNotifierProvider.notifier)
+        .resendEmailCode(widget.email);
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -85,13 +88,17 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Verificar email'), automaticallyImplyLeading: false),
+      appBar: AppBar(
+          title: const Text('Verificar email'),
+          automaticallyImplyLeading: false),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
             const SizedBox(height: 40),
-            Text('Hemos enviado un código de verificación a tu email: ${widget.email}', textAlign: TextAlign.center),
+            Text(
+                'Hemos enviado un código de verificación a tu email: ${widget.email}',
+                textAlign: TextAlign.center),
             const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -124,7 +131,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
             TextButton(
               onPressed: _isResending ? null : _resendCode,
               child: _isResending
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Reenviar código'),
             ),
           ],

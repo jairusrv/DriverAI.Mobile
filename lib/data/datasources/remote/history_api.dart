@@ -6,15 +6,12 @@ import '../../../core/constants/shared_prefs_keys.dart';
 import 'api_client.dart';
 
 class HistoryApi {
-  final Dio _dio =
-      ApiClient().dio;
+  final Dio _dio = ApiClient().dio;
 
-  final FlutterSecureStorage _storage =
-      const FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<int> _getUserId() async {
-    final userId =
-        await _storage.read(
+    final userId = await _storage.read(
       key: SharedPrefsKeys.userId,
     );
 
@@ -28,8 +25,7 @@ class HistoryApi {
   }
 
   Future<Response> getMyHistory() async {
-    final userId =
-        await _getUserId();
+    final userId = await _getUserId();
 
     return await _dio.get(
       '${ApiConstants.history}/$userId',
@@ -37,8 +33,7 @@ class HistoryApi {
   }
 
   Future<Response> getMySummary() async {
-    final userId =
-        await _getUserId();
+    final userId = await _getUserId();
 
     return await _dio.get(
       '${ApiConstants.history}/$userId/summary',
@@ -55,8 +50,7 @@ class HistoryApi {
     required String decision,
     required String sourceApp,
   }) async {
-    final userId =
-        await _getUserId();
+    final userId = await _getUserId();
 
     return await _dio.post(
       ApiConstants.history,
@@ -64,10 +58,8 @@ class HistoryApi {
         'userId': userId,
         'fare': fare,
         'distanceKm': distanceKm,
-        'pickupDistanceKm':
-            pickupDistanceKm,
-        'estimatedTimeMinutes':
-            estimatedTimeMinutes,
+        'pickupDistanceKm': pickupDistanceKm,
+        'estimatedTimeMinutes': estimatedTimeMinutes,
         'profit': profit,
         'profitPerKm': profitPerKm,
         'decision': decision,

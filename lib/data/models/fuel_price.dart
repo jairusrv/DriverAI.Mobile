@@ -14,36 +14,34 @@ class FuelPrice extends Equatable {
   factory FuelPrice.fromJson(
     Map<String, dynamic> json,
   ) {
-    final rawProduct = (
-      json['fuelType'] ??
-      json['producto'] ??
-      json['Producto'] ??
-      json['nomprod'] ??
-      json['Nomprod'] ??
-      json['tipo'] ??
-      json['Tipo'] ??
-      ''
-    ).toString();
+    final rawProduct = (json['fuelType'] ??
+            json['producto'] ??
+            json['Producto'] ??
+            json['nomprod'] ??
+            json['Nomprod'] ??
+            json['tipo'] ??
+            json['Tipo'] ??
+            '')
+        .toString();
 
-    final rawPrice = (
-      json['price'] ??
-      json['precio'] ??
-      json['Precio'] ??
-      json['preciototal'] ??
-      json['PrecioTotal'] ??
-      0
-    ).toString().trim();
+    final rawPrice = (json['price'] ??
+            json['precio'] ??
+            json['Precio'] ??
+            json['preciototal'] ??
+            json['PrecioTotal'] ??
+            0)
+        .toString()
+        .trim();
 
     return FuelPrice(
       price: double.tryParse(rawPrice) ?? 0,
       date: DateTime.tryParse(
-            (
-              json['createdAt'] ??
-              json['fecha'] ??
-              json['Fecha'] ??
-              json['fechaupd'] ??
-              DateTime.now().toIso8601String()
-            ).toString(),
+            (json['createdAt'] ??
+                    json['fecha'] ??
+                    json['Fecha'] ??
+                    json['fechaupd'] ??
+                    DateTime.now().toIso8601String())
+                .toString(),
           ) ??
           DateTime.now(),
       fuelType: _normalizeFuelType(rawProduct),
@@ -53,8 +51,7 @@ class FuelPrice extends Equatable {
   static String _normalizeFuelType(
     String value,
   ) {
-    final normalized =
-        value.toLowerCase().trim();
+    final normalized = value.toLowerCase().trim();
 
     if (normalized.contains('super') ||
         normalized.contains('súper') ||
@@ -62,8 +59,7 @@ class FuelPrice extends Equatable {
       return 'super';
     }
 
-    if (normalized.contains('regular') ||
-        normalized.contains('plus 91')) {
+    if (normalized.contains('regular') || normalized.contains('plus 91')) {
       return 'regular';
     }
 

@@ -7,8 +7,7 @@ import '../../../core/constants/shared_prefs_keys.dart';
 class ApiClient {
   late final Dio _dio;
 
-  final FlutterSecureStorage _secureStorage =
-      const FlutterSecureStorage();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   ApiClient() {
     _dio = Dio(
@@ -40,15 +39,12 @@ class ApiClient {
           options,
           handler,
         ) async {
-          final token =
-              await _secureStorage.read(
+          final token = await _secureStorage.read(
             key: SharedPrefsKeys.token,
           );
 
-          if (token != null &&
-              token.isNotEmpty) {
-            options.headers['Authorization'] =
-                'Bearer $token';
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
           }
 
           return handler.next(options);
@@ -57,8 +53,7 @@ class ApiClient {
           error,
           handler,
         ) async {
-          if (error.response?.statusCode ==
-              401) {
+          if (error.response?.statusCode == 401) {
             await _secureStorage.delete(
               key: SharedPrefsKeys.token,
             );

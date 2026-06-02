@@ -61,8 +61,7 @@ class SubscriptionInfo {
         data['referralsNeededForReward'],
         fallback: 5,
       ),
-      lastReferralRewardMessage:
-          data['lastReferralRewardMessage']?.toString(),
+      lastReferralRewardMessage: data['lastReferralRewardMessage']?.toString(),
       message: data['message']?.toString() ?? '',
     );
   }

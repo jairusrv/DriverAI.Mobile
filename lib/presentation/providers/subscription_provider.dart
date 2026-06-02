@@ -36,11 +36,13 @@ final subscriptionProvider = FutureProvider<SubscriptionInfo?>((ref) async {
 });
 
 // Notifier para acciones como activar suscripción
-class SubscriptionNotifier extends StateNotifier<AsyncValue<SubscriptionInfo?>> {
+class SubscriptionNotifier
+    extends StateNotifier<AsyncValue<SubscriptionInfo?>> {
   final SubscriptionRepository _repository;
   final String phoneNumber;
 
-  SubscriptionNotifier(this._repository, this.phoneNumber) : super(const AsyncValue.data(null)) {
+  SubscriptionNotifier(this._repository, this.phoneNumber)
+      : super(const AsyncValue.data(null)) {
     loadStatus();
   }
 
@@ -56,17 +58,22 @@ class SubscriptionNotifier extends StateNotifier<AsyncValue<SubscriptionInfo?>> 
   Future<void> activate(int months) async {
     final result = await _repository.activateSubscription(phoneNumber, months);
     result.fold(
-      (failure) => state = AsyncValue.error(failure.message, StackTrace.current),
+      (failure) =>
+          state = AsyncValue.error(failure.message, StackTrace.current),
       (_) => loadStatus(), // recargar estado después de activar
     );
   }
 }
 
-final subscriptionNotifierProvider = StateNotifierProvider<SubscriptionNotifier, AsyncValue<SubscriptionInfo?>>((ref) {
+final subscriptionNotifierProvider =
+    StateNotifierProvider<SubscriptionNotifier, AsyncValue<SubscriptionInfo?>>(
+        (ref) {
   const storage = FlutterSecureStorage();
-  final phoneNumber = storage.read(key: 'phone_number').then((value) => value ?? '');
+  final phoneNumber =
+      storage.read(key: 'phone_number').then((value) => value ?? '');
   // No podemos usar async en el provider, así que lo haremos con un futuro aparte. Mejor usamos un provider normal que depende del phoneNumber.
-  throw UnimplementedError('Se necesita obtener phoneNumber de forma asíncrona. Se usará otro enfoque.');
+  throw UnimplementedError(
+      'Se necesita obtener phoneNumber de forma asíncrona. Se usará otro enfoque.');
 });
 
 /// Para manejar la dependencia asíncrona del phoneNumber, creamos un provider separado:

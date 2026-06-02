@@ -14,15 +14,23 @@ import '../../services/fuel_price_session_service.dart';
 import '../../services/session_manager.dart';
 
 final apiClientProvider = Provider((ref) => ApiClient());
-final authApiProvider = Provider((ref) => AuthApi(ref.read(apiClientProvider).dio));
-final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepositoryImpl(ref.read(authApiProvider)));
+final authApiProvider =
+    Provider((ref) => AuthApi(ref.read(apiClientProvider).dio));
+final authRepositoryProvider = Provider<AuthRepository>(
+    (ref) => AuthRepositoryImpl(ref.read(authApiProvider)));
 
-final loginUseCaseProvider = Provider((ref) => LoginUseCase(ref.read(authRepositoryProvider)));
-final registerUseCaseProvider = Provider((ref) => RegisterUseCase(ref.read(authRepositoryProvider)));
-final verifyCodeUseCaseProvider = Provider((ref) => VerifyCodeUseCase(ref.read(authRepositoryProvider)));
-final resendCodeUseCaseProvider = Provider((ref) => ResendCodeUseCase(ref.read(authRepositoryProvider)));
-final verifyEmailUseCaseProvider = Provider((ref) => VerifyEmailUseCase(ref.read(authRepositoryProvider)));
-final resendEmailCodeUseCaseProvider = Provider((ref) => ResendEmailCodeUseCase(ref.read(authRepositoryProvider)));
+final loginUseCaseProvider =
+    Provider((ref) => LoginUseCase(ref.read(authRepositoryProvider)));
+final registerUseCaseProvider =
+    Provider((ref) => RegisterUseCase(ref.read(authRepositoryProvider)));
+final verifyCodeUseCaseProvider =
+    Provider((ref) => VerifyCodeUseCase(ref.read(authRepositoryProvider)));
+final resendCodeUseCaseProvider =
+    Provider((ref) => ResendCodeUseCase(ref.read(authRepositoryProvider)));
+final verifyEmailUseCaseProvider =
+    Provider((ref) => VerifyEmailUseCase(ref.read(authRepositoryProvider)));
+final resendEmailCodeUseCaseProvider =
+    Provider((ref) => ResendEmailCodeUseCase(ref.read(authRepositoryProvider)));
 
 final secureStorageProvider = Provider((ref) => const FlutterSecureStorage());
 
@@ -49,10 +57,22 @@ class AuthState {
 
   const AuthState.initial() : this(isLoading: false, isAuthenticated: false);
   const AuthState.loading() : this(isLoading: true, isAuthenticated: false);
-  const AuthState.unverified(String phoneNumber) : this(isLoading: false, isAuthenticated: false, isUnverified: true, pendingPhoneNumber: phoneNumber);
-  const AuthState.authenticated(Map<String, dynamic> data) : this(isLoading: false, isAuthenticated: true, userData: data);
-  const AuthState.error(String message) : this(isLoading: false, isAuthenticated: false, errorMessage: message);
-  const AuthState.subscriptionRequired(Map<String, dynamic> data) : this(isLoading: false, isAuthenticated: false, subscriptionRequired: true, subscriptionData: data);
+  const AuthState.unverified(String phoneNumber)
+      : this(
+            isLoading: false,
+            isAuthenticated: false,
+            isUnverified: true,
+            pendingPhoneNumber: phoneNumber);
+  const AuthState.authenticated(Map<String, dynamic> data)
+      : this(isLoading: false, isAuthenticated: true, userData: data);
+  const AuthState.error(String message)
+      : this(isLoading: false, isAuthenticated: false, errorMessage: message);
+  const AuthState.subscriptionRequired(Map<String, dynamic> data)
+      : this(
+            isLoading: false,
+            isAuthenticated: false,
+            subscriptionRequired: true,
+            subscriptionData: data);
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -106,14 +126,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final token = data['token'] as String;
         final user = data['user'] as Map<String, dynamic>;
         await _secureStorage.write(key: 'auth_token', value: token);
-        await _secureStorage.write(key: 'user_id', value: user['id'].toString());
-        await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
+        await _secureStorage.write(
+            key: 'user_id', value: user['id'].toString());
+        await _secureStorage.write(
+            key: 'phone_number', value: user['phoneNumber']);
         await _secureStorage.write(key: 'email', value: user['email']);
         await _secureStorage.write(key: 'username', value: user['username']);
         await _secureStorage.write(
-  key: 'role',
-  value: user['role'] ?? 'User',
-);
+          key: 'role',
+          value: user['role'] ?? 'User',
+        );
         state = AuthState.authenticated(data);
         return data;
       },
@@ -122,7 +144,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<bool> verifyCode(String phoneNumber, String code) async {
     state = const AuthState.loading();
-    final result = await _verifyCodeUseCase(phoneNumber: phoneNumber, code: code);
+    final result =
+        await _verifyCodeUseCase(phoneNumber: phoneNumber, code: code);
     return result.fold(
       (failure) {
         state = AuthState.error(failure.message);
@@ -132,14 +155,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final token = data['token'] as String;
         final user = data['user'] as Map<String, dynamic>;
         await _secureStorage.write(key: 'auth_token', value: token);
-        await _secureStorage.write(key: 'user_id', value: user['id'].toString());
-        await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
+        await _secureStorage.write(
+            key: 'user_id', value: user['id'].toString());
+        await _secureStorage.write(
+            key: 'phone_number', value: user['phoneNumber']);
         await _secureStorage.write(key: 'email', value: user['email']);
         await _secureStorage.write(key: 'username', value: user['username']);
         await _secureStorage.write(
-  key: 'role',
-  value: user['role'] ?? 'User',
-);
+          key: 'role',
+          value: user['role'] ?? 'User',
+        );
         state = AuthState.authenticated(data);
         return true;
       },
@@ -159,7 +184,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<bool> login(String phoneNumber, String password) async {
     state = const AuthState.loading();
-    final result = await _loginUseCase(phoneNumber: phoneNumber, password: password);
+    final result =
+        await _loginUseCase(phoneNumber: phoneNumber, password: password);
     return result.fold(
       (failure) {
         state = AuthState.error(failure.message);
@@ -169,14 +195,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final token = data['token'] as String;
         final user = data['user'] as Map<String, dynamic>;
         await _secureStorage.write(key: 'auth_token', value: token);
-        await _secureStorage.write(key: 'user_id', value: user['id'].toString());
-        await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
+        await _secureStorage.write(
+            key: 'user_id', value: user['id'].toString());
+        await _secureStorage.write(
+            key: 'phone_number', value: user['phoneNumber']);
         await _secureStorage.write(key: 'email', value: user['email']);
         await _secureStorage.write(key: 'username', value: user['username']);
         await _secureStorage.write(
-  key: 'role',
-  value: user['role'] ?? 'User',
-);
+          key: 'role',
+          value: user['role'] ?? 'User',
+        );
         state = AuthState.authenticated(data);
         return true;
       },
@@ -197,14 +225,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
           final token = data['token'] as String;
           final user = data['user'] as Map<String, dynamic>;
           await _secureStorage.write(key: 'auth_token', value: token);
-          await _secureStorage.write(key: 'user_id', value: user['id'].toString());
-          await _secureStorage.write(key: 'phone_number', value: user['phoneNumber']);
+          await _secureStorage.write(
+              key: 'user_id', value: user['id'].toString());
+          await _secureStorage.write(
+              key: 'phone_number', value: user['phoneNumber']);
           await _secureStorage.write(key: 'email', value: user['email']);
           await _secureStorage.write(key: 'username', value: user['username']);
           await _secureStorage.write(
-  key: 'role',
-  value: user['role'] ?? 'User',
-);
+            key: 'role',
+            value: user['role'] ?? 'User',
+          );
           state = AuthState.authenticated(data);
         } else {
           state = AuthState.unverified(state.pendingPhoneNumber ?? '');
@@ -226,7 +256,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future logout() async {
-     await SessionManager.clear();
+    await SessionManager.clear();
     await FuelPriceSessionService.clear();
 
     await _secureStorage.deleteAll();
@@ -235,7 +265,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     loginUseCase: ref.read(loginUseCaseProvider),
     registerUseCase: ref.read(registerUseCaseProvider),

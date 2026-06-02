@@ -111,14 +111,14 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return Left(AuthFailure(response.message));
     } catch (e, stackTrace) {
-  await ErrorLogService.logError(
-    source: 'mobile_login',
-    message: _technicalErrorMessage(e),
-    stackTrace: stackTrace.toString(),
-  );
+      await ErrorLogService.logError(
+        source: 'mobile_login',
+        message: _technicalErrorMessage(e),
+        stackTrace: stackTrace.toString(),
+      );
 
-  return Left(_mapExceptionToFailure(e));
-}
+      return Left(_mapExceptionToFailure(e));
+    }
   }
 
   @override
@@ -240,10 +240,8 @@ class AuthRepositoryImpl implements AuthRepository {
     final data = error.response?.data;
 
     if (data is Map) {
-      final message = data['message'] ??
-          data['error'] ??
-          data['title'] ??
-          data['detail'];
+      final message =
+          data['message'] ?? data['error'] ?? data['title'] ?? data['detail'];
 
       if (message != null) {
         return message.toString();
@@ -256,14 +254,15 @@ class AuthRepositoryImpl implements AuthRepository {
 
     return '';
   }
+
   String _technicalErrorMessage(Object error) {
-  if (error is DioException) {
-    final statusCode = error.response?.statusCode;
-    final data = error.response?.data;
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      final data = error.response?.data;
 
-    return 'DioException | status=$statusCode | data=$data';
+      return 'DioException | status=$statusCode | data=$data';
+    }
+
+    return error.toString();
   }
-
-  return error.toString();
-}
 }
