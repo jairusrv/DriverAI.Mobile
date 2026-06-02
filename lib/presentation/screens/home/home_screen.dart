@@ -26,6 +26,7 @@ import '../stats/stats_screen.dart';
 import '../../../services/native_notification_service.dart';
 import '../subscription/subscription_status_screen.dart';
 import '../admin/admin_payments_screen.dart';
+import '../payment/report_sinpe_payment_screen.dart';
 
 final recopeApiProvider = Provider(
   (ref) => RecopeApi(
@@ -462,6 +463,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               },
             ),
+
+          ListTile(
+            leading: const Icon(Icons.mobile_friendly),
+            title: const Text('Reportar pago SINPE'),
+            onTap: () {
+              Navigator.pop(context);
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ReportSinpePaymentScreen(),
+                ),
+              );
+            },
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(
