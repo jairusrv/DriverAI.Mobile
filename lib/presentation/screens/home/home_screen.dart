@@ -8,6 +8,7 @@ import '../../../services/recope_service.dart';
 import '../../../services/overlay_service.dart';
 import '../../../services/minimize_service.dart';
 import '../../../services/session_manager.dart';
+import '../../../services/native_notification_service.dart';
 
 import '../../../domain/calculators/profitability_calculator.dart';
 
@@ -20,10 +21,8 @@ import '../../providers/subscription_provider.dart';
 import '../../providers/auth_provider.dart';
 
 import '../history/history_screen.dart';
-
 import '../configuration/user_config_screen.dart';
 import '../stats/stats_screen.dart';
-import '../../../services/native_notification_service.dart';
 import '../subscription/subscription_status_screen.dart';
 import '../admin/admin_payments_screen.dart';
 import '../payment/report_sinpe_payment_screen.dart';
@@ -47,9 +46,7 @@ final profitabilityCalculatorProvider =
     Provider((ref) => ProfitabilityCalculator());
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({
-    super.key,
-  });
+  const HomeScreen({super.key});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -58,11 +55,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasCheckedAccess = false;
   bool _hasAccess = true;
-  String? _errorMessage;
-
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
   bool _isAdmin = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -74,9 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     try {
       const storage = FlutterSecureStorage();
 
-      final token = await storage.read(
-        key: 'auth_token',
-      );
+      final token = await storage.read(key: 'auth_token');
 
       if (token == null) {
         if (mounted) {
@@ -87,21 +79,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
       final role = await storage.read(key: 'role');
 
-      setState(() {
-        _isAdmin = role?.toLowerCase() == 'admin';
-      });
+      if (mounted) {
+        setState(() {
+          _isAdmin = role?.toLowerCase() == 'admin';
+        });
+      }
 
       await SessionManager.initialize();
 
-      final phoneNumber = await storage.read(
-        key: 'phone_number',
-      );
+      final phoneNumber = await storage.read(key: 'phone_number');
 
       if (phoneNumber == null || phoneNumber.isEmpty) {
-        setState(() {
-          _hasCheckedAccess = true;
-          _hasAccess = true;
-        });
+        if (mounted) {
+          setState(() {
+            _hasCheckedAccess = true;
+            _hasAccess = true;
+          });
+        }
 
         _setupNotificationListener();
         return;
@@ -110,48 +104,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       try {
         final api = ref.read(subscriptionApiProvider);
 
-        final response = await api.getSubscriptionStatus(
-          phoneNumber,
-        );
+        final response = await api.getSubscriptionStatus(phoneNumber);
 
         final hasAccess = response.success &&
             response.data != null &&
             response.data!.hasAccess;
 
-        setState(() {
-          _hasCheckedAccess = true;
-          _hasAccess = hasAccess;
-          _errorMessage = null;
-        });
-      } catch (e) {
-        setState(() {
-          _hasCheckedAccess = true;
-          _hasAccess = true;
-          _errorMessage =
-              'No se pudo verificar suscripción, pero puedes continuar.';
-        });
-      }
+        if (mounted) {
+          setState(() {
+            _hasCheckedAccess = true;
+            _hasAccess = hasAccess;
+            _errorMessage = null;
+          });
+        }
 
-      if (_hasAccess && mounted) {
+        if (hasAccess && mounted) {
+          _setupNotificationListener();
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _hasCheckedAccess = true;
+            _hasAccess = true;
+            _errorMessage =
+                'No se pudo verificar suscripción, pero puedes continuar.';
+          });
+        }
+
         _setupNotificationListener();
       }
     } catch (e) {
-      setState(() {
-        _hasCheckedAccess = true;
-        _hasAccess = true;
-        _errorMessage = 'Error inesperado, pero puedes continuar.';
-      });
+      if (mounted) {
+        setState(() {
+          _hasCheckedAccess = true;
+          _hasAccess = true;
+          _errorMessage = 'Error inesperado, pero puedes continuar.';
+        });
+      }
 
       _setupNotificationListener();
     }
   }
 
   void _setupNotificationListener() {
-    final listener = ref.read(
-      rideNotificationListenerProvider,
-    );
+    final listener = ref.read(rideNotificationListenerProvider);
 
     listener.onRideDetected = (rideData) async {
+      if (!_hasAccess) {
+        return;
+      }
+
       final userParams = ref.read(userParametersProvider);
 
       if (!userParams.notificationsEnabled) {
@@ -163,9 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           userParams.fuelType,
         );
 
-        final calculator = ref.read(
-          profitabilityCalculatorProvider,
-        );
+        final calculator = ref.read(profitabilityCalculatorProvider);
 
         final result = calculator.calculate(
           ride: rideData,
@@ -196,14 +196,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             sourceApp: rideData.provider,
           );
         } catch (e) {
-          debugPrint(
-            'Error guardando historial: $e',
-          );
+          debugPrint('Error guardando historial: $e');
         }
       } catch (e) {
-        debugPrint(
-          'Error procesando viaje: $e',
-        );
+        debugPrint('Error procesando viaje: $e');
       }
     };
   }
@@ -217,9 +213,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
 
-    await Future.delayed(
-      const Duration(seconds: 1),
-    );
+    await Future.delayed(const Duration(seconds: 1));
 
     await MinimizeService.minimizeApp();
   }
@@ -237,6 +231,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => const UserConfigScreen(),
+      ),
+    );
+  }
+
+  void _openSubscriptionStatus() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SubscriptionStatusScreen(),
+      ),
+    );
+  }
+
+  void _openReportSinpe() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ReportSinpePaymentScreen(),
       ),
     );
   }
@@ -272,175 +284,140 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          ///*      ///
+          if (_hasAccess) ...[
+            ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('Estadísticas'),
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const StatsScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('Historial'),
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const HistoryScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bug_report),
+              title: const Text('Probar última notificación'),
+              onTap: () async {
+                Navigator.pop(context);
+
+                final data =
+                    await NativeNotificationService.getLastNotification();
+
+                if (data == null || data['text'] == null) {
+                  return;
+                }
+
+                ref.read(rideNotificationListenerProvider).processNotificationText(
+                      provider: data['provider'] ?? 'unknown',
+                      text: data['text'],
+                    );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.play_arrow),
+              title: const Text('Simular Uber Driver'),
+              onTap: () {
+                Navigator.pop(context);
+
+                ref
+                    .read(rideNotificationListenerProvider)
+                    .simulateUberDriverOffer();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delivery_dining),
+              title: const Text('Simular Uber Delivery'),
+              onTap: () {
+                Navigator.pop(context);
+
+                ref
+                    .read(rideNotificationListenerProvider)
+                    .simulateUberDeliveryOffer();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.local_taxi),
+              title: const Text('Simular DiDi'),
+              onTap: () {
+                Navigator.pop(context);
+
+                ref.read(rideNotificationListenerProvider).simulateDidiOffer();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Inicio'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Configuración'),
+              onTap: () {
+                Navigator.pop(context);
+                _openSettings();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_active),
+              title: const Text('Permiso de notificaciones'),
+              onTap: () async {
+                Navigator.pop(context);
+
+                await NativeNotificationService.openNotificationSettings();
+              },
+            ),
+          ],
+
           ListTile(
-            leading: const Icon(
-              Icons.bar_chart,
-            ),
-            title: const Text(
-              'Estadísticas',
-            ),
+            leading: const Icon(Icons.verified_user),
+            title: const Text('Estado de suscripción'),
             onTap: () {
               Navigator.pop(context);
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const StatsScreen(),
-                ),
-              );
+              _openSubscriptionStatus();
             },
           ),
 
-          ///*      ///
           ListTile(
-            leading: const Icon(
-              Icons.history,
-            ),
-            title: const Text(
-              'Historial',
-            ),
+            leading: const Icon(Icons.mobile_friendly),
+            title: const Text('Reportar pago SINPE'),
             onTap: () {
               Navigator.pop(context);
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HistoryScreen(),
-                ),
-              );
+              _openReportSinpe();
             },
           ),
 
-          ListTile(
-            leading: const Icon(
-              Icons.bug_report,
+          if (_hasAccess)
+            ListTile(
+              leading: const Icon(Icons.payment),
+              title: const Text('Suscripción'),
+              onTap: () {
+                Navigator.pop(context);
+                context.goNamed('subscription');
+              },
             ),
-            title: const Text(
-              'Probar última notificación',
-            ),
-            onTap: () async {
-              Navigator.pop(context);
 
-              final data =
-                  await NativeNotificationService.getLastNotification();
-
-              if (data == null || data['text'] == null) {
-                return;
-              }
-
-              ref
-                  .read(
-                    rideNotificationListenerProvider,
-                  )
-                  .processNotificationText(
-                    provider: data['provider'] ?? 'unknown',
-                    text: data['text'],
-                  );
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.play_arrow),
-            title: const Text('Simular Uber Driver'),
-            onTap: () {
-              Navigator.pop(context);
-
-              ref
-                  .read(rideNotificationListenerProvider)
-                  .simulateUberDriverOffer();
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.delivery_dining),
-            title: const Text('Simular Uber Delivery'),
-            onTap: () {
-              Navigator.pop(context);
-
-              ref
-                  .read(rideNotificationListenerProvider)
-                  .simulateUberDeliveryOffer();
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.local_taxi),
-            title: const Text('Simular DiDi'),
-            onTap: () {
-              Navigator.pop(context);
-
-              ref.read(rideNotificationListenerProvider).simulateDidiOffer();
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.home,
-            ),
-            title: const Text(
-              'Inicio',
-            ),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.settings,
-            ),
-            title: const Text(
-              'Configuración',
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              _openSettings();
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.verified_user,
-            ),
-            title: const Text(
-              'Estado de suscripción',
-            ),
-            onTap: () {
-              Navigator.pop(context);
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SubscriptionStatusScreen(),
-                ),
-              );
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(
-              Icons.payment,
-            ),
-            title: const Text(
-              'Suscripción',
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              context.goNamed('subscription');
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.notifications_active,
-            ),
-            title: const Text(
-              'Permiso de notificaciones',
-            ),
-            onTap: () async {
-              Navigator.pop(context);
-
-              await NativeNotificationService.openNotificationSettings();
-            },
-          ),
-          if (_isAdmin)
+          if (_hasAccess && _isAdmin)
             ListTile(
               leading: const Icon(
                 Icons.admin_panel_settings,
@@ -464,21 +441,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
             ),
 
-          ListTile(
-            leading: const Icon(Icons.mobile_friendly),
-            title: const Text('Reportar pago SINPE'),
-            onTap: () {
-              Navigator.pop(context);
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ReportSinpePaymentScreen(),
-                ),
-              );
-            },
-          ),
           const Divider(),
+
           ListTile(
             leading: const Icon(
               Icons.logout,
@@ -500,6 +464,136 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _expiredSubscriptionBody() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.lock_clock,
+              size: 82,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Tu suscripción está vencida',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 23,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Puedes iniciar sesión para reportar tu pago SINPE o revisar el estado de tu suscripción.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 26),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.mobile_friendly),
+                label: const Text('Reportar pago SINPE'),
+                onPressed: _openReportSinpe,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.verified_user),
+                label: const Text('Estado de suscripción'),
+                onPressed: _openSubscriptionStatus,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              icon: const Icon(Icons.logout),
+              label: const Text('Cerrar sesión'),
+              onPressed: _logout,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _activeSubscriptionBody() {
+    return Column(
+      children: [
+        if (_errorMessage != null)
+          Container(
+            color: Colors.orange,
+            padding: const EdgeInsets.all(8),
+            width: double.infinity,
+            child: Text(
+              _errorMessage!,
+              style: const TextStyle(
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.notifications_active,
+                    size: 80,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Esperando notificaciones de Uber/Didi...',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Cuando llegue un viaje, aparecerá un overlay con el análisis.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton.icon(
+                    onPressed: _minimizeAndWait,
+                    icon: const Icon(Icons.phone_android),
+                    label: const Text('Esperar viajes'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Presiona "Esperar viajes" para minimizar la app.\nSeguiremos escuchando notificaciones.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_hasCheckedAccess) {
@@ -510,151 +604,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    if (!_hasAccess) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'DriverAI',
-          ),
-        ),
-        drawer: _buildDrawer(),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.lock,
-                size: 80,
-                color: Colors.red,
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              const Text(
-                'Tu período de prueba ha expirado o no tienes una suscripción activa.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              const Text(
-                'Activa tu suscripción para seguir usando DriverAI.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              ElevatedButton(
-                onPressed: () => context.goNamed(
-                  'subscription',
-                ),
-                child: const Text(
-                  'Ver suscripciones',
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: AppBar(
-        title: const Text(
-          'DriverAI',
-        ),
+        title: const Text('DriverAI'),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.settings,
+          if (_hasAccess)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: _openSettings,
             ),
-            onPressed: _openSettings,
-          ),
         ],
       ),
-      body: Column(
-        children: [
-          if (_errorMessage != null)
-            Container(
-              color: Colors.orange,
-              padding: const EdgeInsets.all(8),
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(
-                  24.0,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.notifications_active,
-                      size: 80,
-                      color: Colors.blue,
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    const Text(
-                      'Esperando notificaciones de Uber/Didi...',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    const Text(
-                      'Cuando llegue un viaje, aparecerá un overlay con el análisis.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(
-                      height: 30,
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _minimizeAndWait,
-                      icon: const Icon(
-                        Icons.phone_android,
-                      ),
-                      label: const Text(
-                        'Esperar viajes',
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            30,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    const Text(
-                      'Presiona "Esperar viajes" para minimizar la app.\nSeguiremos escuchando notificaciones.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      body: _hasAccess
+          ? _activeSubscriptionBody()
+          : _expiredSubscriptionBody(),
     );
   }
 }
