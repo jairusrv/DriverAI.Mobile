@@ -70,6 +70,15 @@ class MainActivity : FlutterActivity() {
                     result.success(isBatteryOptimizationIgnored())
                 }
 
+		"openAccessibilitySettings" -> {
+    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    result.success(true)
+}
+
+"isAccessibilityEnabled" -> {
+    result.success(isAccessibilityServiceEnabled())
+}
+
                 "getLastNotification" -> {
                     result.success(
                         mapOf(
@@ -123,4 +132,16 @@ class MainActivity : FlutterActivity() {
 
         return powerManager.isIgnoringBatteryOptimizations(packageName)
     }
+	private fun isAccessibilityServiceEnabled(): Boolean {
+    val expectedService =
+        "$packageName/.DriverAiAccessibilityService"
+
+    val enabledServices = Settings.Secure.getString(
+        contentResolver,
+        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+    ) ?: return false
+
+    return enabledServices.lowercase()
+        .contains(expectedService.lowercase())
+}
 }

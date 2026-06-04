@@ -6,17 +6,17 @@ class PermissionsSetupScreen extends StatefulWidget {
   const PermissionsSetupScreen({super.key});
 
   @override
-  State<PermissionsSetupScreen> createState() =>
-      _PermissionsSetupScreenState();
+  State<PermissionsSetupScreen> createState() => _PermissionsSetupScreenState();
 }
 
-class _PermissionsSetupScreenState
-    extends State<PermissionsSetupScreen> with WidgetsBindingObserver {
+class _PermissionsSetupScreenState extends State<PermissionsSetupScreen>
+    with WidgetsBindingObserver {
   bool _isLoading = true;
 
   bool _notificationEnabled = false;
   bool _overlayEnabled = false;
   bool _batteryIgnored = false;
+  bool _accessibilityEnabled = false;
 
   @override
   void initState() {
@@ -48,11 +48,13 @@ class _PermissionsSetupScreenState
     final notificationEnabled =
         await NativePermissionService.isNotificationListenerEnabled();
 
-    final overlayEnabled =
-        await NativePermissionService.canDrawOverlays();
+    final overlayEnabled = await NativePermissionService.canDrawOverlays();
 
     final batteryIgnored =
         await NativePermissionService.isBatteryOptimizationIgnored();
+
+    final accessibilityEnabled =
+        await NativePermissionService.isAccessibilityEnabled();
 
     if (!mounted) return;
 
@@ -67,7 +69,8 @@ class _PermissionsSetupScreenState
   bool get _allReady =>
       _notificationEnabled &&
       _overlayEnabled &&
-      _batteryIgnored;
+      _batteryIgnored &&
+      _accessibilityEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -93,8 +96,18 @@ class _PermissionsSetupScreenState
                   isReady: _notificationEnabled,
                   buttonText: 'Activar',
                   onTap: () async {
-                    await NativePermissionService
-                        .openNotificationSettings();
+                    await NativePermissionService.openNotificationSettings();
+                  },
+                ),
+                const SizedBox(height: 12),
+                _permissionTile(
+                  title: 'Accesibilidad',
+                  description:
+                      'Permite que DriverAI lea la oferta visible en Uber o DiDi para calcular la rentabilidad.',
+                  isReady: _accessibilityEnabled,
+                  buttonText: 'Activar',
+                  onTap: () async {
+                    await NativePermissionService.openAccessibilitySettings();
                   },
                 ),
                 const SizedBox(height: 12),
@@ -105,8 +118,7 @@ class _PermissionsSetupScreenState
                   isReady: _overlayEnabled,
                   buttonText: 'Activar',
                   onTap: () async {
-                    await NativePermissionService
-                        .openOverlaySettings();
+                    await NativePermissionService.openOverlaySettings();
                   },
                 ),
                 const SizedBox(height: 12),
@@ -177,9 +189,7 @@ class _PermissionsSetupScreenState
             Row(
               children: [
                 Icon(
-                  _allReady
-                      ? Icons.check_circle
-                      : Icons.warning_amber_rounded,
+                  _allReady ? Icons.check_circle : Icons.warning_amber_rounded,
                   color: _allReady ? Colors.green : Colors.orange,
                 ),
                 const SizedBox(width: 8),
@@ -222,17 +232,14 @@ class _PermissionsSetupScreenState
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
-              isReady
-                  ? Icons.check_circle
-                  : Icons.radio_button_unchecked,
+              isReady ? Icons.check_circle : Icons.radio_button_unchecked,
               color: isReady ? Colors.green : Colors.orange,
               size: 32,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,

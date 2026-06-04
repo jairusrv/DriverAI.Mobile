@@ -1,8 +1,7 @@
 import 'package:flutter/services.dart';
 
 class NativePermissionService {
-  static const MethodChannel _channel =
-      MethodChannel('driverai/notifications');
+  static const MethodChannel _channel = MethodChannel('driverai/notifications');
 
   static Future<void> openNotificationSettings() async {
     await _channel.invokeMethod('openNotificationSettings');
@@ -43,16 +42,41 @@ class NativePermissionService {
   }
 
   static Future<bool> areRequiredPermissionsReady() async {
-    final notificationEnabled =
-        await isNotificationListenerEnabled();
+    final notificationEnabled = await isNotificationListenerEnabled();
 
     final overlayEnabled = await canDrawOverlays();
 
-    final batteryIgnored =
-        await isBatteryOptimizationIgnored();
+    final batteryIgnored = await isBatteryOptimizationIgnored();
+
+    final accessibilityEnabled = await isAccessibilityEnabled();
 
     return notificationEnabled &&
         overlayEnabled &&
-        batteryIgnored;
+        batteryIgnored &&
+        accessibilityEnabled;
+  }
+
+  static Future<void> openAccessibilitySettings() async {
+    await _channel.invokeMethod('openAccessibilitySettings');
+  }
+
+  static Future<bool> isAccessibilityEnabled() async {
+    final result = await _channel.invokeMethod<bool>(
+      'isAccessibilityEnabled',
+    );
+
+    return result ?? false;
+  }
+
+  static Future<void> openAccessibilitySettings() async {
+    await _channel.invokeMethod('openAccessibilitySettings');
+  }
+
+  static Future<bool> isAccessibilityEnabled() async {
+    final result = await _channel.invokeMethod<bool>(
+      'isAccessibilityEnabled',
+    );
+
+    return result ?? false;
   }
 }
