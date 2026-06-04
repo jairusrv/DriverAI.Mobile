@@ -26,6 +26,7 @@ import '../stats/stats_screen.dart';
 import '../subscription/subscription_status_screen.dart';
 import '../admin/admin_payments_screen.dart';
 import '../payment/report_sinpe_payment_screen.dart';
+import '../permissions/permissions_setup_screen.dart';
 
 final recopeApiProvider = Provider(
   (ref) => RecopeApi(
@@ -205,18 +206,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _minimizeAndWait() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'DriverAI continuará escuchando notificaciones en segundo plano',
-        ),
-      ),
-    );
+  final ready = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const PermissionsSetupScreen(),
+    ),
+  );
 
-    await Future.delayed(const Duration(seconds: 1));
-
-    await MinimizeService.minimizeApp();
+  if (ready != true) {
+    return;
   }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'DriverAI continuará escuchando notificaciones en segundo plano',
+      ),
+    ),
+  );
+
+  await Future.delayed(
+    const Duration(seconds: 1),
+  );
+
+  await MinimizeService.minimizeApp();
+}
 
   Future<void> _logout() async {
     await ref.read(authNotifierProvider.notifier).logout();

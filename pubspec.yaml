@@ -56,8 +56,6 @@ flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/images/driverai_icon.png"
-  adaptive_icon_background: "#0F172A"
-  adaptive_icon_foreground: "assets/images/driverai_icon.png"
 
 flutter_native_splash:
   color: "#0F172A"
