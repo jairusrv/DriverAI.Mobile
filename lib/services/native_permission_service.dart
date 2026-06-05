@@ -1,7 +1,8 @@
 import 'package:flutter/services.dart';
 
 class NativePermissionService {
-  static const MethodChannel _channel = MethodChannel('driverai/notifications');
+  static const MethodChannel _channel =
+      MethodChannel('driverai/notifications');
 
   static Future<void> openNotificationSettings() async {
     await _channel.invokeMethod('openNotificationSettings');
@@ -10,6 +11,18 @@ class NativePermissionService {
   static Future<bool> isNotificationListenerEnabled() async {
     final result = await _channel.invokeMethod<bool>(
       'isNotificationListenerEnabled',
+    );
+
+    return result ?? false;
+  }
+
+  static Future<void> openAccessibilitySettings() async {
+    await _channel.invokeMethod('openAccessibilitySettings');
+  }
+
+  static Future<bool> isAccessibilityEnabled() async {
+    final result = await _channel.invokeMethod<bool>(
+      'isAccessibilityEnabled',
     );
 
     return result ?? false;
@@ -42,41 +55,20 @@ class NativePermissionService {
   }
 
   static Future<bool> areRequiredPermissionsReady() async {
-    final notificationEnabled = await isNotificationListenerEnabled();
+    final notificationEnabled =
+        await isNotificationListenerEnabled();
+
+    final accessibilityEnabled =
+        await isAccessibilityEnabled();
 
     final overlayEnabled = await canDrawOverlays();
 
-    final batteryIgnored = await isBatteryOptimizationIgnored();
-
-    final accessibilityEnabled = await isAccessibilityEnabled();
+    final batteryIgnored =
+        await isBatteryOptimizationIgnored();
 
     return notificationEnabled &&
+        accessibilityEnabled &&
         overlayEnabled &&
-        batteryIgnored &&
-        accessibilityEnabled;
-  }
-
-  static Future<void> openAccessibilitySettings() async {
-    await _channel.invokeMethod('openAccessibilitySettings');
-  }
-
-  static Future<bool> isAccessibilityEnabled() async {
-    final result = await _channel.invokeMethod<bool>(
-      'isAccessibilityEnabled',
-    );
-
-    return result ?? false;
-  }
-
-  static Future<void> openAccessibilitySettings() async {
-    await _channel.invokeMethod('openAccessibilitySettings');
-  }
-
-  static Future<bool> isAccessibilityEnabled() async {
-    final result = await _channel.invokeMethod<bool>(
-      'isAccessibilityEnabled',
-    );
-
-    return result ?? false;
+        batteryIgnored;
   }
 }

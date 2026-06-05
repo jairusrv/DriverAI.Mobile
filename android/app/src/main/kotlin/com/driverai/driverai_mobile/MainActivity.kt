@@ -133,15 +133,21 @@ class MainActivity : FlutterActivity() {
         return powerManager.isIgnoringBatteryOptimizations(packageName)
     }
 	private fun isAccessibilityServiceEnabled(): Boolean {
-    val expectedService =
-        "$packageName/.DriverAiAccessibilityService"
-
     val enabledServices = Settings.Secure.getString(
         contentResolver,
         Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
     ) ?: return false
 
-    return enabledServices.lowercase()
-        .contains(expectedService.lowercase())
+    val serviceShort =
+        "$packageName/.DriverAiAccessibilityService"
+
+    val serviceFull =
+        "$packageName/$packageName.DriverAiAccessibilityService"
+
+    val enabledLower = enabledServices.lowercase()
+
+    return enabledLower.contains(serviceShort.lowercase()) ||
+        enabledLower.contains(serviceFull.lowercase()) ||
+        enabledLower.contains("driveraiaccessibilityservice")
 }
 }
