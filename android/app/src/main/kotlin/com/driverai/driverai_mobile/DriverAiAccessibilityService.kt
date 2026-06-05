@@ -49,6 +49,10 @@ class DriverAiAccessibilityService : AccessibilityService() {
         }
     }
 
+    override fun onServiceConnected() {
+    super.onServiceConnected()
+    Log.d("DriverAI_ACCESS", "AccessibilityService conectado")
+}	
     override fun onInterrupt() {}
 
     private fun collectText(node: AccessibilityNodeInfo?): String {
