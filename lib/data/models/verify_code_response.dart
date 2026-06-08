@@ -1,6 +1,5 @@
 // data/models/verify_code_response.dart
 import 'user.dart';
-import 'subscription_info.dart';
 
 class VerifyCodeResponse {
   final String token;
