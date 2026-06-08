@@ -83,18 +83,26 @@ class DriverAiAccessibilityService : AccessibilityService() {
             object : TakeScreenshotCallback {
                 override fun onSuccess(result: ScreenshotResult) {
                     try {
-                        val bitmap = Bitmap.wrapHardwareBuffer(
-                            result.hardwareBuffer,
-                            result.colorSpace
-                        )
+                        val hardwareBitmap = Bitmap.wrapHardwareBuffer(
+    result.hardwareBuffer,
+    result.colorSpace
+)
 
-                        if (bitmap == null) {
-                            Log.e("DriverAI_OCR", "Bitmap null")
-                            isProcessingOcr = false
-                            return
-                        }
+if (hardwareBitmap == null) {
+    Log.e("DriverAI_OCR", "Bitmap null")
+    result.hardwareBuffer.close()
+    isProcessingOcr = false
+    return
+}
 
-                        runOcr(bitmap)
+val softwareBitmap = hardwareBitmap.copy(
+    Bitmap.Config.ARGB_8888,
+    false
+)
+
+result.hardwareBuffer.close()
+
+runOcr(softwareBitmap)
                     } catch (e: Exception) {
                         Log.e(
                             "DriverAI_OCR",
@@ -304,26 +312,38 @@ class DriverAiAccessibilityService : AccessibilityService() {
     }
 
     private fun parseMoney(value: String): Double {
-        var clean = value.trim()
-            .replace(" ", "")
+    var clean = value.trim()
+        .replace(" ", "")
 
-        clean = if (clean.contains(",") && clean.contains(".")) {
+    clean = when {
+        clean.contains(".") && clean.contains(",") -> {
             clean.replace(".", "")
                 .replace(",", ".")
-        } else if (clean.contains(",")) {
-            val parts = clean.split(",")
+        }
 
+        clean.contains(".") -> {
+            val parts = clean.split(".")
+            if (parts.last().length == 3) {
+                clean.replace(".", "")
+            } else {
+                clean
+            }
+        }
+
+        clean.contains(",") -> {
+            val parts = clean.split(",")
             if (parts.last().length == 3) {
                 clean.replace(",", "")
             } else {
                 clean.replace(",", ".")
             }
-        } else {
-            clean
         }
 
-        return clean.toDoubleOrNull() ?: 0.0
+        else -> clean
     }
+
+    return clean.toDoubleOrNull() ?: 0.0
+}
 
     private fun parseDecimal(value: String): Double {
         return value.trim()
