@@ -9,6 +9,7 @@ import '../../../services/overlay_service.dart';
 import '../../../services/minimize_service.dart';
 import '../../../services/session_manager.dart';
 import '../../../services/native_notification_service.dart';
+import '../../../services/native_capture_service.dart';
 
 import '../../../domain/calculators/profitability_calculator.dart';
 
@@ -57,6 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasCheckedAccess = false;
   bool _hasAccess = true;
   bool _isAdmin = false;
+  bool _isWaitingTrips = false;
   String? _errorMessage;
 
   @override
@@ -107,9 +109,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         final response = await api.getSubscriptionStatus(phoneNumber);
 
-        final hasAccess = response.success &&
-            response.data != null &&
-            response.data!.hasAccess;
+        final hasAccess =
+            response.success && response.data != null && response.data!.hasAccess;
 
         if (mounted) {
           setState(() {
@@ -151,15 +152,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final listener = ref.read(rideNotificationListenerProvider);
 
     listener.onRideDetected = (rideData) async {
-      if (!_hasAccess) {
-        return;
-      }
+      if (!_hasAccess) return;
 
       final userParams = ref.read(userParametersProvider);
 
-      if (!userParams.notificationsEnabled) {
-        return;
-      }
+      if (!userParams.notificationsEnabled) return;
 
       try {
         final fuelPrice = await SessionManager.getFuelPrice(
@@ -181,9 +178,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ride: rideData,
         );
 
-        final profitPerKm = rideData.distanceKm > 0
-            ? result.netProfit / rideData.distanceKm
-            : 0.0;
+        final profitPerKm =
+            rideData.distanceKm > 0 ? result.netProfit / rideData.distanceKm : 0.0;
 
         try {
           await HistoryApi().saveRide(
@@ -205,32 +201,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     };
   }
 
-  Future<void> _minimizeAndWait() async {
-  final ready = await Navigator.push<bool>(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const PermissionsSetupScreen(),
-    ),
-  );
+  Future<void> _startWaitingTrips() async {
+    final ready = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PermissionsSetupScreen(),
+      ),
+    );
 
-  if (ready != true) {
-    return;
+    if (ready != true) return;
+
+    try {
+      final started = await NativeCaptureService.startCapture();
+
+      if (!mounted) return;
+
+      if (started) {
+        setState(() {
+          _isWaitingTrips = true;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('DriverAI está analizando solicitudes'),
+          ),
+        );
+
+        await Future.delayed(
+          const Duration(seconds: 1),
+        );
+
+        await MinimizeService.minimizeApp();
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
   }
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        'DriverAI continuará escuchando notificaciones en segundo plano',
-      ),
-    ),
-  );
+  Future<void> _stopWaitingTrips() async {
+    try {
+      await NativeCaptureService.stopCapture();
 
-  await Future.delayed(
-    const Duration(seconds: 1),
-  );
+      if (!mounted) return;
 
-  await MinimizeService.minimizeApp();
-}
+      setState(() {
+        _isWaitingTrips = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('DriverAI dejó de analizar solicitudes'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
+  }
 
   Future<void> _logout() async {
     await ref.read(authNotifierProvider.notifier).logout();
@@ -297,7 +335,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
           ),
-
           if (_hasAccess) ...[
             ListTile(
               leading: const Icon(Icons.bar_chart),
@@ -333,8 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onTap: () async {
                 Navigator.pop(context);
 
-                final data =
-                    await NativeNotificationService.getLastNotification();
+                final data = await NativeNotificationService.getLastNotification();
 
                 if (data == null || data['text'] == null) {
                   return;
@@ -352,9 +388,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onTap: () {
                 Navigator.pop(context);
 
-                ref
-                    .read(rideNotificationListenerProvider)
-                    .simulateUberDriverOffer();
+                ref.read(rideNotificationListenerProvider).simulateUberDriverOffer();
               },
             ),
             ListTile(
@@ -402,7 +436,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
             ),
           ],
-
           ListTile(
             leading: const Icon(Icons.verified_user),
             title: const Text('Estado de suscripción'),
@@ -411,7 +444,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _openSubscriptionStatus();
             },
           ),
-
           ListTile(
             leading: const Icon(Icons.mobile_friendly),
             title: const Text('Reportar pago SINPE'),
@@ -420,7 +452,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _openReportSinpe();
             },
           ),
-
           if (_hasAccess)
             ListTile(
               leading: const Icon(Icons.payment),
@@ -430,7 +461,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 context.goNamed('subscription');
               },
             ),
-
           if (_hasAccess && _isAdmin)
             ListTile(
               leading: const Icon(
@@ -454,9 +484,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               },
             ),
-
           const Divider(),
-
           ListTile(
             leading: const Icon(
               Icons.logout,
@@ -560,26 +588,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.notifications_active,
+                  Icon(
+                    _isWaitingTrips
+                        ? Icons.radar
+                        : Icons.notifications_active,
                     size: 80,
-                    color: Colors.blue,
+                    color: _isWaitingTrips ? Colors.green : Colors.blue,
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Esperando notificaciones de Uber/Didi...',
+                  Text(
+                    _isWaitingTrips
+                        ? 'DriverAI está analizando la pantalla...'
+                        : 'Esperando solicitudes de Uber/Didi...',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Cuando llegue un viaje, aparecerá un overlay con el análisis.',
+                  Text(
+                    _isWaitingTrips
+                        ? 'Cuando aparezca una oferta, DriverAI intentará leerla con OCR y mostrar el overlay.'
+                        : 'Cuando llegue un viaje, aparecerá un overlay con el análisis.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
                   ElevatedButton.icon(
-                    onPressed: _minimizeAndWait,
-                    icon: const Icon(Icons.phone_android),
-                    label: const Text('Esperar viajes'),
+                    onPressed:
+                        _isWaitingTrips ? _stopWaitingTrips : _startWaitingTrips,
+                    icon: Icon(
+                      _isWaitingTrips
+                          ? Icons.stop_circle
+                          : Icons.phone_android,
+                    ),
+                    label: Text(
+                      _isWaitingTrips ? 'Detener análisis' : 'Esperar viajes',
+                    ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
@@ -591,10 +632,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Presiona "Esperar viajes" para minimizar la app.\nSeguiremos escuchando notificaciones.',
+                  Text(
+                    _isWaitingTrips
+                        ? 'Puedes abrir Uber o DiDi. DriverAI seguirá analizando en segundo plano.'
+                        : 'Presiona "Esperar viajes" para activar la captura de pantalla.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
                     ),
@@ -630,9 +673,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
         ],
       ),
-      body: _hasAccess
-          ? _activeSubscriptionBody()
-          : _expiredSubscriptionBody(),
+      body: _hasAccess ? _activeSubscriptionBody() : _expiredSubscriptionBody(),
     );
   }
 }
