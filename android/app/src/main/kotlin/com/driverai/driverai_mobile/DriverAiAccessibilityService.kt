@@ -33,9 +33,15 @@ class DriverAiAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val packageName = event?.packageName?.toString() ?: return
-
+ Log.d(
+        "DriverAI_OCR",
+        "EVENTO GENERAL package=$packageName type=${event.eventType}"
+    )
         if (!isSupportedApp(packageName)) return
-
+Log.d(
+        "DriverAI_OCR",
+        "Evento detectado desde Uber/DiDi: $packageName"
+    )
         val now = System.currentTimeMillis()
 
         if (isProcessingOcr) return
