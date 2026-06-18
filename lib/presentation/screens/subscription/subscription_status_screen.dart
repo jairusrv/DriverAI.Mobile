@@ -48,14 +48,6 @@ class _SubscriptionStatusScreenState
         return;
       }
 
-      if (phoneNumber == null || phoneNumber.isEmpty) {
-        setState(() {
-          _error = 'No se encontró el teléfono de la sesión.';
-          _isLoading = false;
-        });
-        return;
-      }
-
       final api = ref.read(subscriptionApiProvider);
 
       final response = await api.getSubscriptionDetails(
@@ -305,7 +297,7 @@ class _SubscriptionStatusScreenState
 
   Widget _rewardCard(String message) {
     return _card(
-      color: Colors.green.withOpacity(0.12),
+      color: Colors.green.withValues(alpha: 0.12),
       child: Row(
         children: [
           const Icon(

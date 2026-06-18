@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
+
 
 class MinimizeService {
   static const MethodChannel _channel = MethodChannel('com.driverai.minimize');
@@ -15,7 +17,7 @@ class MinimizeService {
         throw UnimplementedError('Minimización no soportada en iOS');
       }
     } catch (e) {
-      print('Error al minimizar: $e');
+      debugPrint('Error al minimizar: $e');
     }
   }
 }

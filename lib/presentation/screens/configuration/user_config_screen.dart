@@ -440,7 +440,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DropdownButtonFormField<String>(
-            value: _selectedVehicleType,
+            initialValue: _selectedVehicleType,
             decoration: const InputDecoration(
               labelText: 'Tipo de vehículo',
               border: OutlineInputBorder(),
@@ -512,7 +512,7 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
       child: Column(
         children: [
           DropdownButtonFormField<String>(
-            value: _selectedFuelType,
+            initialValue: _selectedFuelType,
             items: const [
               DropdownMenuItem(
                 value: 'super',
@@ -612,10 +612,10 @@ class _UserConfigScreenState extends ConsumerState<UserConfigScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.12),
+              color: Colors.orange.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.orange.withOpacity(0.35),
+                color: Colors.orange.withValues(alpha: 0.35),
               ),
             ),
             child: Text(

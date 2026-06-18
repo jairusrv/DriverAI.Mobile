@@ -15,8 +15,6 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
 
     companion object {
-        var lastNotificationProvider: String? = null
-        var lastNotificationText: String? = null
 
         private const val SCREEN_CAPTURE_REQUEST_CODE = 9001
     }
@@ -86,16 +84,7 @@ class MainActivity : FlutterActivity() {
                 "isAccessibilityEnabled" -> {
                     result.success(isAccessibilityServiceEnabled())
                 }
-
-                "getLastNotification" -> {
-                    result.success(
-                        mapOf(
-                            "provider" to lastNotificationProvider,
-                            "text" to lastNotificationText
-                        )
-                    )
-                }
-
+                
                 else -> result.notImplemented()
             }
         }

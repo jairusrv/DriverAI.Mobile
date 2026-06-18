@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../widgets/common/custom_button.dart';
 import '../../providers/auth_provider.dart';
-import '../../../core/constants/shared_prefs_keys.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   final String email;
@@ -24,8 +22,14 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   @override
   void dispose() {
-    for (final controller in _codeControllers) controller.dispose();
-    for (final node in _focusNodes) node.dispose();
+    for (final controller in _codeControllers) {
+      controller.dispose();
+    }
+
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
+
     super.dispose();
   }
 

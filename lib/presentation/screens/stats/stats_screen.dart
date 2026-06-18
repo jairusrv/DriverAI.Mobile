@@ -152,7 +152,7 @@ class _StatsScreenState
           children: [
             CircleAvatar(
               backgroundColor:
-                  color.withOpacity(0.15),
+                  color.withValues(alpha:0.2),
               child: Icon(
                 icon,
                 color: color,

@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../data/datasources/remote/api_client.dart';
 import '../data/datasources/remote/recope_api.dart';
+import 'package:flutter/foundation.dart';
 
 class FuelPriceSessionService {
   static final Map<String, double> _memoryCache = {};
@@ -42,18 +43,18 @@ class FuelPriceSessionService {
       return _memoryCache;
     }
 
-    print('DriverAI: cargando precios combustible...');
+debugPrint('DriverAI: cargando precios combustible...');
 
 final api = RecopeApi(ApiClient().dio);
 final response = await api.getFuelPrices();
 
-print('DriverAI: respuesta RECOPE success=${response.success}');
-print('DriverAI: precios recibidos=${response.data?.length}');
+debugPrint('DriverAI: respuesta RECOPE success=${response.success}',);
+debugPrint('DriverAI: precios recibidos=${response.data?.length}',);
 
     if (response.success && response.data != null) {
       for (final item in response.data!) {
         final productText =
-            '${item.fuelType}'.toLowerCase().trim();
+            item.fuelType.toString().toLowerCase().trim();
 
         final key = _normalizeFuelType(productText);
 
@@ -63,7 +64,7 @@ print('DriverAI: precios recibidos=${response.data?.length}');
           _memoryCache[key] = item.price;
         }
       }
-      print('DriverAI: fuel cache=$_memoryCache');
+      debugPrint('DriverAI: fuel cache=$_memoryCache',);
     }
 
     await _storage.write(

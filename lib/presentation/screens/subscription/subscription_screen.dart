@@ -101,7 +101,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                           const Text(
                               'Tu período de prueba ha expirado. Activa una suscripción para continuar.'),
                         const SizedBox(height: 8),
-                        if (info.message != null) Text(info.message!),
+                        if (info.message.isNotEmpty) Text(info.message),
                       ],
                     ),
                   ),
@@ -112,7 +112,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int>(
-                  value: _selectedMonths,
+                  initialValue: _selectedMonths,
                   items: [1, 3, 6, 12].map((months) {
                     return DropdownMenuItem(
                         value: months, child: Text('$months mes(es)'));
@@ -129,7 +129,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   ElevatedButton.icon(
                     onPressed: _activateSubscription,
                     icon: const Icon(Icons.payment),
-                    label: Text('Pagar y activar (${_selectedMonths} mes(es))'),
+                    label: Text('Pagar y activar ($_selectedMonths mes(es))'),
                   ),
               ],
             ),

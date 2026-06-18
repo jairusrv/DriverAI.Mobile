@@ -4,26 +4,29 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 
-class DriverAiNotificationListener : NotificationListenerService() {
+class DriverAiNotificationListener :
+    NotificationListenerService() {
 
-    override fun onNotificationPosted(sbn: StatusBarNotification) {
-        val packageName = sbn.packageName
+    override fun onNotificationPosted(
+        sbn: StatusBarNotification
+    ) {
 
-        val extras = sbn.notification.extras
+        val packageName =
+            sbn.packageName.lowercase()
 
-        val title = extras.getCharSequence("android.title")?.toString() ?: ""
-        val text = extras.getCharSequence("android.text")?.toString() ?: ""
-        val bigText = extras.getCharSequence("android.bigText")?.toString() ?: ""
+        val isSupported =
+            packageName.contains("uber") ||
+            packageName.contains("didi") ||
+            packageName.contains("indriver")
 
-        val fullText = listOf(title, text, bigText)
-            .filter { it.isNotBlank() }
-            .joinToString("\n")
+        if (!isSupported)
+            return
 
-        if (fullText.isBlank()) return
+        Log.d(
+            "DriverAI_NOTIFY",
+            "Notificación detectada: $packageName"
+        )
 
-        Log.d("DriverAI", "Notificación capturada: $fullText")
-
-        MainActivity.lastNotificationProvider = packageName
-        MainActivity.lastNotificationText = fullText
+        DriverAiCaptureService.triggerIntensiveScan()
     }
 }

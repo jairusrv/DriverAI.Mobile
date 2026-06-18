@@ -3,21 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../../services/ride_notification_listener.dart';
 import '../../../services/recope_service.dart';
-import '../../../services/overlay_service.dart';
 import '../../../services/minimize_service.dart';
 import '../../../services/session_manager.dart';
-import '../../../services/native_notification_service.dart';
 import '../../../services/native_capture_service.dart';
 
-import '../../../domain/calculators/profitability_calculator.dart';
 
-import '../../../data/datasources/remote/api_client.dart';
 import '../../../data/datasources/remote/recope_api.dart';
-import '../../../data/datasources/remote/history_api.dart';
 
-import '../../providers/user_preferences_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../providers/auth_provider.dart';
 
@@ -40,12 +33,6 @@ final recopeServiceProvider = Provider(
     ref.read(recopeApiProvider),
   ),
 );
-
-final rideNotificationListenerProvider =
-    Provider((ref) => RideNotificationListener());
-
-final profitabilityCalculatorProvider =
-    Provider((ref) => ProfitabilityCalculator());
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -100,7 +87,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           });
         }
 
-        _setupNotificationListener();
         return;
       }
 
@@ -109,8 +95,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         final response = await api.getSubscriptionStatus(phoneNumber);
 
-        final hasAccess =
-            response.success && response.data != null && response.data!.hasAccess;
+        final hasAccess = response.success &&
+            response.data != null &&
+            response.data!.hasAccess;
 
         if (mounted) {
           setState(() {
@@ -120,9 +107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           });
         }
 
-        if (hasAccess && mounted) {
-          _setupNotificationListener();
-        }
+       
       } catch (e) {
         if (mounted) {
           setState(() {
@@ -133,7 +118,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           });
         }
 
-        _setupNotificationListener();
       }
     } catch (e) {
       if (mounted) {
@@ -144,62 +128,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         });
       }
 
-      _setupNotificationListener();
     }
   }
 
-  void _setupNotificationListener() {
-    final listener = ref.read(rideNotificationListenerProvider);
-
-    listener.onRideDetected = (rideData) async {
-      if (!_hasAccess) return;
-
-      final userParams = ref.read(userParametersProvider);
-
-      if (!userParams.notificationsEnabled) return;
-
-      try {
-        final fuelPrice = await SessionManager.getFuelPrice(
-          userParams.fuelType,
-        );
-
-        final calculator = ref.read(profitabilityCalculatorProvider);
-
-        final result = calculator.calculate(
-          ride: rideData,
-          fuelPricePerLiter: fuelPrice,
-          params: userParams,
-          maxPickupDistance: userParams.maxPickupDistance,
-          maxTripDistance: userParams.maxTripDistance,
-        );
-
-        OverlayService.showProfitabilityOverlay(
-          result,
-          ride: rideData,
-        );
-
-        final profitPerKm =
-            rideData.distanceKm > 0 ? result.netProfit / rideData.distanceKm : 0.0;
-
-        try {
-          await HistoryApi().saveRide(
-            fare: rideData.fare,
-            distanceKm: rideData.distanceKm,
-            pickupDistanceKm: rideData.pickupDistanceKm,
-            estimatedTimeMinutes: rideData.durationMinutes.toDouble(),
-            profit: result.netProfit,
-            profitPerKm: profitPerKm,
-            decision: result.decision.name.toUpperCase(),
-            sourceApp: rideData.provider,
-          );
-        } catch (e) {
-          debugPrint('Error guardando historial: $e');
-        }
-      } catch (e) {
-        debugPrint('Error procesando viaje: $e');
-      }
-    };
-  }
 
   Future<void> _startWaitingTrips() async {
     final ready = await Navigator.push<bool>(
@@ -365,53 +296,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.bug_report),
-              title: const Text('Probar última notificación'),
-              onTap: () async {
-                Navigator.pop(context);
-
-                final data = await NativeNotificationService.getLastNotification();
-
-                if (data == null || data['text'] == null) {
-                  return;
-                }
-
-                ref.read(rideNotificationListenerProvider).processNotificationText(
-                      provider: data['provider'] ?? 'unknown',
-                      text: data['text'],
-                    );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.play_arrow),
-              title: const Text('Simular Uber Driver'),
-              onTap: () {
-                Navigator.pop(context);
-
-                ref.read(rideNotificationListenerProvider).simulateUberDriverOffer();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delivery_dining),
-              title: const Text('Simular Uber Delivery'),
-              onTap: () {
-                Navigator.pop(context);
-
-                ref
-                    .read(rideNotificationListenerProvider)
-                    .simulateUberDeliveryOffer();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.local_taxi),
-              title: const Text('Simular DiDi'),
-              onTap: () {
-                Navigator.pop(context);
-
-                ref.read(rideNotificationListenerProvider).simulateDidiOffer();
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Inicio'),
               onTap: () {
@@ -424,15 +308,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onTap: () {
                 Navigator.pop(context);
                 _openSettings();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications_active),
-              title: const Text('Permiso de notificaciones'),
-              onTap: () async {
-                Navigator.pop(context);
-
-                await NativeNotificationService.openNotificationSettings();
               },
             ),
           ],
@@ -452,15 +327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _openReportSinpe();
             },
           ),
-          if (_hasAccess)
-            ListTile(
-              leading: const Icon(Icons.payment),
-              title: const Text('Suscripción'),
-              onTap: () {
-                Navigator.pop(context);
-                context.goNamed('subscription');
-              },
-            ),
+          
           if (_hasAccess && _isAdmin)
             ListTile(
               leading: const Icon(
@@ -589,9 +456,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    _isWaitingTrips
-                        ? Icons.radar
-                        : Icons.notifications_active,
+                    _isWaitingTrips ? Icons.radar : Icons.notifications_active,
                     size: 80,
                     color: _isWaitingTrips ? Colors.green : Colors.blue,
                   ),
@@ -611,12 +476,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 30),
                   ElevatedButton.icon(
-                    onPressed:
-                        _isWaitingTrips ? _stopWaitingTrips : _startWaitingTrips,
+                    onPressed: _isWaitingTrips
+                        ? _stopWaitingTrips
+                        : _startWaitingTrips,
                     icon: Icon(
-                      _isWaitingTrips
-                          ? Icons.stop_circle
-                          : Icons.phone_android,
+                      _isWaitingTrips ? Icons.stop_circle : Icons.phone_android,
                     ),
                     label: Text(
                       _isWaitingTrips ? 'Detener análisis' : 'Esperar viajes',

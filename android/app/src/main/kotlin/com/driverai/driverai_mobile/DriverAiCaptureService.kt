@@ -39,7 +39,7 @@ class DriverAiCaptureService : Service() {
             activeInstance?.startIntensiveScan()
         }
     }
-
+    private lateinit var historyRepository: DriverAiHistoryRepository
     private val handler = Handler(Looper.getMainLooper())
 
     private var imageReader: ImageReader? = null
@@ -79,7 +79,7 @@ class DriverAiCaptureService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
+        historyRepository = DriverAiHistoryRepository(this)
         overlayManager = DriverAiOverlayManager(this)
         activeInstance = this
 
@@ -307,11 +307,13 @@ class DriverAiCaptureService : Service() {
                 onOfferDetected = { offer ->
     pauseOcrUntil = System.currentTimeMillis() + 30_000L
 
+    historyRepository.saveOffer(offer)
+
     overlayManager.show(offer)
 
     Log.d(
         "DriverAI_CAPTURE",
-        "Overlay mostrado, OCR pausado 30s"
+        "Overlay mostrado, oferta guardada, OCR pausado 30s"
     )
 },
                 onComplete = {

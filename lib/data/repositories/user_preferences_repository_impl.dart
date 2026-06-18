@@ -28,7 +28,7 @@ class UserPreferencesRepositoryImpl implements UserPreferencesRepository {
         return Right(UserParameters.fromJson(json));
       } else {
         // Valores por defecto
-        return Right(const UserParameters());
+        return const Right(UserParameters());
       }
     } catch (e) {
       return Left(LocalStorageFailure(e.toString()));

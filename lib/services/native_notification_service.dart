@@ -10,15 +10,4 @@ class NativeNotificationService {
     );
   }
 
-  static Future<Map<String, dynamic>?>
-      getLastNotification() async {
-    final result =
-        await _channel.invokeMethod<Map>(
-      'getLastNotification',
-    );
-
-    if (result == null) return null;
-
-    return Map<String, dynamic>.from(result);
-  }
 }
