@@ -155,17 +155,19 @@ class DriverAiOcrProcessor {
                 "REVISAR" -> "#F59E0B"
                 else -> "#EF4444"
             }
-
+        val destinationText = extractDestinationText(text)
+        
         return OfferResult(
-            provider = provider.name,
-            decision = decision,
-            color = color,
-            fare = fare,
-            totalKm = totalKm,
-            totalMinutes = totalMinutes,
-            profitPerKm = profitPerKm,
-            netProfit = netProfit
-        )
+    provider = provider.name,
+    decision = decision,
+    color = color,
+    fare = fare,
+    totalKm = totalKm,
+    totalMinutes = totalMinutes,
+    profitPerKm = profitPerKm,
+    netProfit = netProfit,
+    destinationText = destinationText
+)
     }
 
     private fun detectProvider(
@@ -486,6 +488,33 @@ class DriverAiOcrProcessor {
             .toDoubleOrNull() ?: 0.0
     }
 
+    private fun extractDestinationText(
+    text: String
+): String? {
+
+    val lines =
+        text.lines()
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+
+    val candidates =
+        lines.filter {
+
+            it.length > 5 &&
+            !it.contains("aceptar", true) &&
+            !it.contains("min", true) &&
+            !it.contains("km", true) &&
+            !it.contains("₡") &&
+            !it.contains("total", true) &&
+            !it.contains("viaje", true)
+        }
+
+    return candidates
+        .takeLast(3)
+        .joinToString(", ")
+        .ifBlank { null }
+}
+
     enum class Provider {
         UBER_EATS,
         UBER_RIDE,
@@ -500,13 +529,14 @@ class DriverAiOcrProcessor {
     )
 
     data class OfferResult(
-        val provider: String,
-        val decision: String,
-        val color: String,
-        val fare: Double,
-        val totalKm: Double,
-        val totalMinutes: Int,
-        val profitPerKm: Double,
-        val netProfit: Double
-    )
+    val provider: String,
+    val decision: String,
+    val color: String,
+    val fare: Double,
+    val totalKm: Double,
+    val totalMinutes: Int,
+    val profitPerKm: Double,
+    val netProfit: Double,
+    val destinationText: String?
+)
 }

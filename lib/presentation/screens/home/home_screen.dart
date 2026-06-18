@@ -8,12 +8,11 @@ import '../../../services/minimize_service.dart';
 import '../../../services/session_manager.dart';
 import '../../../services/native_capture_service.dart';
 
-
 import '../../../data/datasources/remote/recope_api.dart';
 
 import '../../providers/subscription_provider.dart';
 import '../../providers/auth_provider.dart';
-
+import '../restricted_zones/restricted_hex_zones_screen.dart';
 import '../history/history_screen.dart';
 import '../configuration/user_config_screen.dart';
 import '../stats/stats_screen.dart';
@@ -106,8 +105,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _errorMessage = null;
           });
         }
-
-       
       } catch (e) {
         if (mounted) {
           setState(() {
@@ -117,7 +114,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'No se pudo verificar suscripción, pero puedes continuar.';
           });
         }
-
       }
     } catch (e) {
       if (mounted) {
@@ -127,10 +123,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _errorMessage = 'Error inesperado, pero puedes continuar.';
         });
       }
-
     }
   }
-
 
   Future<void> _startWaitingTrips() async {
     final ready = await Navigator.push<bool>(
@@ -312,6 +306,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
           ListTile(
+            leading: const Icon(Icons.hexagon, color: Colors.red),
+            title: const Text('Zonas rojas'),
+            onTap: () {
+              Navigator.pop(context);
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RestrictedHexZonesScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.verified_user),
             title: const Text('Estado de suscripción'),
             onTap: () {
@@ -327,7 +335,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _openReportSinpe();
             },
           ),
-          
           if (_hasAccess && _isAdmin)
             ListTile(
               leading: const Icon(

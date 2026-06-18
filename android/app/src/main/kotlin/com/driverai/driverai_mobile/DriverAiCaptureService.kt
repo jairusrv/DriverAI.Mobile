@@ -307,9 +307,47 @@ class DriverAiCaptureService : Service() {
                 onOfferDetected = { offer ->
     pauseOcrUntil = System.currentTimeMillis() + 30_000L
 
-    historyRepository.saveOffer(offer)
+    var finalOffer = offer
 
-    overlayManager.show(offer)
+val destination =
+    offer.destinationText
+
+if (!destination.isNullOrBlank()) {
+
+    val location =
+        DriverAiGeocoder.geocode(
+            this,
+            destination
+        )
+
+    if (location != null) {
+
+        val redZone =
+            DriverAiRedZoneDetector.findMatchingZone(
+                this,
+                location.lat,
+                location.lng
+            )
+
+        if (redZone != null) {
+
+            finalOffer =
+                offer.copy(
+                    decision = "RECHAZAR",
+                    color = "#EF4444"
+                )
+
+            Log.d(
+                "DriverAI_REDZONE",
+                "Destino en zona roja: $destination"
+            )
+        }
+    }
+}
+
+historyRepository.saveOffer(finalOffer)
+
+overlayManager.show(finalOffer)
 
     Log.d(
         "DriverAI_CAPTURE",

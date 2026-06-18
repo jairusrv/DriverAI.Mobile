@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../data/datasources/local/shared_preferences_datasource.dart';
 import '../../data/repositories/user_preferences_repository_impl.dart';
 import '../../domain/entities/user_parameters.dart';
 import '../../domain/repositories/user_preferences_repository.dart';
+
 
 final sharedPrefsDataSourceProvider = Provider(
   (ref) => SharedPreferencesDataSource(),

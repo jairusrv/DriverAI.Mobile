@@ -22,6 +22,7 @@ class MainActivity : FlutterActivity() {
     private val notificationChannel = "driverai/notifications"
     private val minimizeChannel = "com.driverai.minimize"
     private val captureChannel = "driverai/capture"
+    private val hexZonesChannel = "driverai/hex_zones"
 
     private var pendingCaptureResult: MethodChannel.Result? = null
 
@@ -129,6 +130,37 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+    flutterEngine.dartExecutor.binaryMessenger,
+    hexZonesChannel
+).setMethodCallHandler { call, result ->
+
+    when (call.method) {
+
+        "syncZones" -> {
+            val json = call.arguments as? String
+
+            if (json.isNullOrBlank()) {
+                result.error(
+                    "INVALID_ZONES",
+                    "Lista de zonas inválida",
+                    null
+                )
+                return@setMethodCallHandler
+            }
+
+            DriverAiHexZoneRepository.saveZones(
+                this,
+                json
+            )
+
+            result.success(true)
+        }
+
+        else -> result.notImplemented()
+    }
+}
     }
 
     private fun startScreenCapture(result: MethodChannel.Result) {
