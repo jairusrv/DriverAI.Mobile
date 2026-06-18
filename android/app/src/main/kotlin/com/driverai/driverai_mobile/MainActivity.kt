@@ -133,8 +133,7 @@ class MainActivity : FlutterActivity() {
                             DriverAiCaptureService::class.java
                         )
                     )
-                    DriverAiCaptureService.mediaProjection?.stop()
-                    DriverAiCaptureService.mediaProjection = null
+                    
                     result.success(true)
                 }
 
@@ -191,22 +190,21 @@ class MainActivity : FlutterActivity() {
             return
         }
 
-        val projectionManager =
-            getSystemService(
-                Context.MEDIA_PROJECTION_SERVICE
-            ) as MediaProjectionManager
+       val serviceIntent =
+    Intent(
+        this,
+        DriverAiCaptureService::class.java
+    )
 
-        DriverAiCaptureService.mediaProjection =
-            projectionManager.getMediaProjection(
-                resultCode,
-                data
-            )
+serviceIntent.putExtra(
+    "resultCode",
+    resultCode
+)
 
-        val serviceIntent =
-            Intent(
-                this,
-                DriverAiCaptureService::class.java
-            )
+serviceIntent.putExtra(
+    "data",
+    data
+)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent)

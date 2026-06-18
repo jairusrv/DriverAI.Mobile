@@ -1,7 +1,11 @@
 package com.driverai.driverai_mobile
 
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
@@ -9,48 +13,67 @@ import android.hardware.display.VirtualDisplay
 import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
+import android.media.projection.MediaProjection.Callback
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.util.DisplayMetrics
 import android.util.Log
-import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import java.nio.ByteBuffer
 
 class DriverAiCaptureService : Service() {
 
     companion object {
-        const val CHANNEL_ID = "driverai_capture"
-        const val NOTIFICATION_ID = 1001
+        private const val CHANNEL_ID = "driverai_capture"
+        private const val NOTIFICATION_ID = 1001
 
-        var mediaProjection: MediaProjection? = null
+        private const val NORMAL_SCAN_DELAY_MS = 1000L
+        private const val INTENSIVE_SCAN_DELAY_MS = 300L
+        private const val INTENSIVE_SCAN_COUNT = 50
+
+        var activeInstance: DriverAiCaptureService? = null
+
+        fun triggerIntensiveScan() {
+            activeInstance?.startIntensiveScan()
+        }
     }
 
     private val handler = Handler(Looper.getMainLooper())
 
-    private lateinit var imageReader: ImageReader
+    private var imageReader: ImageReader? = null
     private var virtualDisplay: VirtualDisplay? = null
+    private var mediaProjection: MediaProjection? = null
 
     private val ocrProcessor = DriverAiOcrProcessor()
-
     private lateinit var overlayManager: DriverAiOverlayManager
 
     private var isProcessing = false
-
+    private var isInitialized = false
+    private var isIntensiveScanRunning = false
+    private var pauseOcrUntil = 0L
     private val captureRunnable = object : Runnable {
         override fun run() {
-
-            if (!isProcessing) {
+            if (!isProcessing && isInitialized) {
                 captureFrame()
             }
 
             handler.postDelayed(
                 this,
-                1000L
+                NORMAL_SCAN_DELAY_MS
             )
+        }
+    }
+
+    private val projectionCallback = object : Callback() {
+        override fun onStop() {
+            Log.d(
+                "DriverAI_CAPTURE",
+                "MediaProjection detenida por Android"
+            )
+
+            stopSelf()
         }
     }
 
@@ -58,17 +81,10 @@ class DriverAiCaptureService : Service() {
         super.onCreate()
 
         overlayManager = DriverAiOverlayManager(this)
+        activeInstance = this
 
         createNotificationChannel()
-
-        startForeground(
-            NOTIFICATION_ID,
-            buildNotification()
-        )
-
-        initializeCapture()
-
-        handler.post(captureRunnable)
+        startDriverAiForeground()
 
         Log.d(
             "DriverAI_CAPTURE",
@@ -76,9 +92,41 @@ class DriverAiCaptureService : Service() {
         )
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
+        val resultCode =
+            intent?.getIntExtra(
+                "resultCode",
+                0
+            ) ?: 0
 
+        val projectionData =
+            intent?.getParcelableExtra<Intent>("data")
+
+        if (resultCode == 0 || projectionData == null) {
+            Log.e(
+                "DriverAI_CAPTURE",
+                "Datos de MediaProjection inválidos"
+            )
+
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        if (!isInitialized) {
+            initializeMediaProjection(
+                resultCode,
+                projectionData
+            )
+        }
+
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
 
         try {
@@ -87,64 +135,144 @@ class DriverAiCaptureService : Service() {
         }
 
         try {
-            imageReader.close()
+            imageReader?.close()
         } catch (_: Exception) {
         }
+
+        try {
+            mediaProjection?.unregisterCallback(
+                projectionCallback
+            )
+        } catch (_: Exception) {
+        }
+
+        try {
+            mediaProjection?.stop()
+        } catch (_: Exception) {
+        }
+
+        virtualDisplay = null
+        imageReader = null
+        mediaProjection = null
+
+        isInitialized = false
+        isProcessing = false
+        isIntensiveScanRunning = false
+
+        activeInstance = null
 
         Log.d(
             "DriverAI_CAPTURE",
             "Servicio detenido"
         )
+
+        super.onDestroy()
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun startDriverAiForeground() {
+        val notification =
+            buildNotification()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            )
+        } else {
+            startForeground(
+                NOTIFICATION_ID,
+                notification
+            )
+        }
     }
 
-    private fun initializeCapture() {
+    private fun initializeMediaProjection(
+        resultCode: Int,
+        projectionData: Intent
+    ) {
+        try {
+            val projectionManager =
+                getSystemService(
+                    MEDIA_PROJECTION_SERVICE
+                ) as MediaProjectionManager
 
-        val projection = mediaProjection
+            mediaProjection =
+                projectionManager.getMediaProjection(
+                    resultCode,
+                    projectionData
+                )
 
-        if (projection == null) {
+            mediaProjection?.registerCallback(
+                projectionCallback,
+                handler
+            )
 
+            initializeCapture()
+
+            isInitialized = true
+
+            handler.post(
+                captureRunnable
+            )
+
+            Log.d(
+                "DriverAI_CAPTURE",
+                "MediaProjection inicializada"
+            )
+        } catch (e: Exception) {
             Log.e(
                 "DriverAI_CAPTURE",
-                "MediaProjection null"
+                "Error inicializando MediaProjection",
+                e
             )
 
             stopSelf()
-
-            return
         }
+    }
 
-        val wm =
-            getSystemService(WINDOW_SERVICE)
-                as WindowManager
+    private fun initializeCapture() {
+        val projection =
+            mediaProjection ?: run {
+                Log.e(
+                    "DriverAI_CAPTURE",
+                    "MediaProjection null"
+                )
 
-        val metrics = DisplayMetrics()
+                stopSelf()
+                return
+            }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display?.getRealMetrics(metrics)
-        } else {
-            @Suppress("DEPRECATION")
-            wm.defaultDisplay.getRealMetrics(metrics)
-        }
+        val metrics =
+            resources.displayMetrics
 
-        imageReader = ImageReader.newInstance(
-            metrics.widthPixels,
-            metrics.heightPixels,
-            PixelFormat.RGBA_8888,
-            2
-        )
+        val width =
+            metrics.widthPixels
+
+        val height =
+            metrics.heightPixels
+
+        val density =
+            metrics.densityDpi
+
+        imageReader =
+            ImageReader.newInstance(
+                width,
+                height,
+                PixelFormat.RGBA_8888,
+                2
+            )
 
         virtualDisplay =
             projection.createVirtualDisplay(
                 "DriverAI",
-                metrics.widthPixels,
-                metrics.heightPixels,
-                metrics.densityDpi,
+                width,
+                height,
+                density,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                imageReader.surface,
+                imageReader!!.surface,
                 null,
                 null
             )
@@ -156,12 +284,16 @@ class DriverAiCaptureService : Service() {
     }
 
     private fun captureFrame() {
-
         try {
 
+            if (System.currentTimeMillis() < pauseOcrUntil) {
+            return
+            }
+            val reader =
+                imageReader ?: return
+
             val image =
-                imageReader.acquireLatestImage()
-                    ?: return
+                reader.acquireLatestImage() ?: return
 
             isProcessing = true
 
@@ -173,22 +305,20 @@ class DriverAiCaptureService : Service() {
             ocrProcessor.process(
                 bitmap,
                 onOfferDetected = { offer ->
+    pauseOcrUntil = System.currentTimeMillis() + 30_000L
 
-                    overlayManager.show(
-                        offer
-                    )
+    overlayManager.show(offer)
 
-                    Log.d(
-                        "DriverAI_CAPTURE",
-                        "Overlay mostrado"
-                    )
-                },
+    Log.d(
+        "DriverAI_CAPTURE",
+        "Overlay mostrado, OCR pausado 30s"
+    )
+},
                 onComplete = {
                     isProcessing = false
                 }
             )
         } catch (e: Exception) {
-
             Log.e(
                 "DriverAI_CAPTURE",
                 "Error capturando",
@@ -202,7 +332,6 @@ class DriverAiCaptureService : Service() {
     private fun imageToBitmap(
         image: Image
     ): Bitmap {
-
         val plane =
             image.planes[0]
 
@@ -216,55 +345,99 @@ class DriverAiCaptureService : Service() {
             plane.rowStride
 
         val rowPadding =
-            rowStride -
-                pixelStride *
-                image.width
+            rowStride - pixelStride * image.width
 
-        val bitmap =
+        val fullBitmap =
             Bitmap.createBitmap(
-                image.width +
-                    rowPadding / pixelStride,
+                image.width + rowPadding / pixelStride,
                 image.height,
                 Bitmap.Config.ARGB_8888
             )
 
-        bitmap.copyPixelsFromBuffer(
+        fullBitmap.copyPixelsFromBuffer(
             buffer
         )
 
-        return Bitmap.createBitmap(
-            bitmap,
-            0,
-            0,
-            image.width,
-            image.height
-        )
+        val croppedBitmap =
+            Bitmap.createBitmap(
+                fullBitmap,
+                0,
+                0,
+                image.width,
+                image.height
+            )
+
+        fullBitmap.recycle()
+
+        return croppedBitmap
     }
 
     private fun buildNotification(): Notification {
-
         return NotificationCompat.Builder(
             this,
             CHANNEL_ID
         )
-            .setContentTitle(
-                "DriverAI"
-            )
-            .setContentText(
-                "Analizando solicitudes..."
-            )
-            .setSmallIcon(
-                android.R.drawable.ic_menu_search
-            )
+            .setContentTitle("DriverAI")
+            .setContentText("Analizando solicitudes")
+            .setSmallIcon(android.R.drawable.ic_menu_search)
             .setOngoing(true)
             .build()
     }
 
-    private fun createNotificationChannel() {
+    private fun startIntensiveScan() {
+        if (!isInitialized)
+            return
 
-        if (Build.VERSION.SDK_INT <
-            Build.VERSION_CODES.O
-        ) return
+        if (isIntensiveScanRunning)
+            return
+
+        isIntensiveScanRunning = true
+
+        Log.d(
+            "DriverAI_CAPTURE",
+            "OCR intensivo iniciado"
+        )
+
+        var count = 0
+
+        val intensiveRunnable =
+            object : Runnable {
+                override fun run() {
+                    if (!isInitialized) {
+                        isIntensiveScanRunning = false
+                        return
+                    }
+
+                    if (!isProcessing) {
+                        captureFrame()
+                    }
+
+                    count++
+
+                    if (count < INTENSIVE_SCAN_COUNT) {
+                        handler.postDelayed(
+                            this,
+                            INTENSIVE_SCAN_DELAY_MS
+                        )
+                    } else {
+                        isIntensiveScanRunning = false
+
+                        Log.d(
+                            "DriverAI_CAPTURE",
+                            "OCR intensivo finalizado"
+                        )
+                    }
+                }
+            }
+
+        handler.post(
+            intensiveRunnable
+        )
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            return
 
         val channel =
             NotificationChannel(
