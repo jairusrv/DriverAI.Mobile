@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-
+import '../screens/splash/splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/verify_code_screen.dart';
@@ -8,8 +8,13 @@ import '../screens/subscription/subscription_screen.dart';
 import '../screens/subscription/subscription_status_screen.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/',
+      name: 'splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: '/login',
       name: 'login',
