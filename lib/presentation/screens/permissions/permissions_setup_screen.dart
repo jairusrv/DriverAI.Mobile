@@ -20,10 +20,9 @@ class _PermissionsSetupScreenState
   bool _batteryIgnored = false;
 
   bool get _allReady =>
-      _notificationEnabled &&
-      _accessibilityEnabled &&
-      _overlayEnabled &&
-      _batteryIgnored;
+    _notificationEnabled &&
+    _overlayEnabled &&
+    _batteryIgnored;
 
   @override
   void initState() {
@@ -121,14 +120,6 @@ class _PermissionsSetupScreenState
                 ),
                 const SizedBox(height: 12),
                 _permissionTile(
-                  title: 'Accesibilidad',
-                  description:
-                      'Permite que DriverAI lea la oferta visible en pantalla para calcular la rentabilidad.',
-                  isReady: _accessibilityEnabled,
-                  onTap: _openAccessibilitySettings,
-                ),
-                const SizedBox(height: 12),
-                _permissionTile(
                   title: 'Mostrar encima de otras apps',
                   description:
                       'Permite mostrar el overlay de rentabilidad sobre Uber o DiDi.',
@@ -178,7 +169,7 @@ class _PermissionsSetupScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'DriverAI necesita estos permisos',
+              'DriverAI necesita estos permisos básicos',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,

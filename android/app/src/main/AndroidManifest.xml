@@ -11,6 +11,9 @@
         android:label="DriverAI"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+    android:name="com.google.android.geo.API_KEY"
+    android:value="AIzaSyDJ1rNptzVpbO2FltDmRnMAFWgl2ctamIA" />
 
         <service
             android:name=".DriverAiCaptureService"
@@ -29,19 +32,7 @@
             </intent-filter>
         </service>
 
-        <service
-            android:name=".DriverAiAccessibilityService"
-            android:label="DriverAI Accessibility Service"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
+        
 
         <activity
             android:name=".MainActivity"

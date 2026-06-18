@@ -127,47 +127,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _startWaitingTrips() async {
-    final ready = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const PermissionsSetupScreen(),
-      ),
-    );
+  try {
+    final started = await NativeCaptureService.startCapture();
 
-    if (ready != true) return;
+    if (!mounted) return;
 
-    try {
-      final started = await NativeCaptureService.startCapture();
+    if (started) {
+      setState(() {
+        _isWaitingTrips = true;
+      });
 
-      if (!mounted) return;
-
-      if (started) {
-        setState(() {
-          _isWaitingTrips = true;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('DriverAI está analizando solicitudes'),
-          ),
-        );
-
-        await Future.delayed(
-          const Duration(seconds: 1),
-        );
-
-        await MinimizeService.minimizeApp();
-      }
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-        ),
-      );
+      await MinimizeService.minimizeApp();
     }
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
   }
+}
 
   Future<void> _stopWaitingTrips() async {
     try {

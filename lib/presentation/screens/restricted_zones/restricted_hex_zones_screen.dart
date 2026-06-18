@@ -24,8 +24,9 @@ class _RestrictedHexZonesScreenState extends State<RestrictedHexZonesScreen> {
     -83.9194,
   );
 
-  static const double _hexRadiusMeters = 350;
-  static const int _gridRadius = 6;
+  static const double _hexRadiusMeters = 220;
+  static const int _gridRadius = 11;
+  static const double _hexSpacingFix = 0.985;
 
   LatLng _mapCenter = _initialPosition;
 
@@ -55,82 +56,83 @@ class _RestrictedHexZonesScreenState extends State<RestrictedHexZonesScreen> {
   }
 
   Future<void> _saveZones() async {
-  final zones = _selectedIndexes.map((index) {
-    final points = _hexPointsByIndex[index] ?? [];
+    final zones = _selectedIndexes.map((index) {
+      final points = _hexPointsByIndex[index] ?? [];
 
-    return RestrictedHexZone(
-      id: index,
-      h3Index: index,
-      enabled: true,
-      points: points
-          .map(
-            (p) => {
-              'lat': p.latitude,
-              'lng': p.longitude,
-            },
-          )
-          .toList(),
+      return RestrictedHexZone(
+        id: index,
+        h3Index: index,
+        enabled: true,
+        points: points
+            .map(
+              (p) => {
+                'lat': p.latitude,
+                'lng': p.longitude,
+              },
+            )
+            .toList(),
+      );
+    }).toList();
+
+    await _zoneService.saveZones(zones);
+    await NativeHexZoneService.syncZones(zones);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Zonas rojas guardadas'),
+      ),
     );
-  }).toList();
-
-  await _zoneService.saveZones(zones);
-  await NativeHexZoneService.syncZones(zones);
-
-  if (!mounted) return;
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Zonas rojas guardadas'),
-    ),
-  );
-}
-
-  void _generateHexagons(LatLng center) {
-  final polygons = <Polygon>{};
-
-  for (var row = -_gridRadius; row <= _gridRadius; row++) {
-    for (var col = -_gridRadius; col <= _gridRadius; col++) {
-      final hexCenter = _hexCenterFromOffset(
-        center: center,
-        row: row,
-        col: col,
-      );
-
-      final index = _hexIndex(hexCenter);
-      final selected = _selectedIndexes.contains(index);
-      final points = _hexagonPoints(hexCenter);
-
-      _hexPointsByIndex[index] = points;
-
-      polygons.add(
-        Polygon(
-          polygonId: PolygonId(index),
-          points: points,
-          consumeTapEvents: true,
-          strokeWidth: selected ? 3 : 1,
-          strokeColor:
-              selected ? Colors.red : Colors.red.withValues(alpha: 0.45),
-          fillColor: selected
-              ? Colors.red.withValues(alpha: 0.48)
-              : Colors.red.withValues(alpha: 0.10),
-          onTap: () => _toggleHex(index),
-        ),
-      );
-    }
   }
 
-  setState(() {
-    _polygons = polygons;
-  });
-}
+  void _generateHexagons(LatLng center) {
+    final polygons = <Polygon>{};
+
+    for (var row = -_gridRadius; row <= _gridRadius; row++) {
+      for (var col = -_gridRadius; col <= _gridRadius; col++) {
+        final hexCenter = _hexCenterFromOffset(
+          center: center,
+          row: row,
+          col: col,
+        );
+
+        final index = _hexIndex(hexCenter);
+        final selected = _selectedIndexes.contains(index);
+        final points = _hexagonPoints(hexCenter);
+
+        _hexPointsByIndex[index] = points;
+
+        polygons.add(
+          Polygon(
+            polygonId: PolygonId(index),
+            points: points,
+            consumeTapEvents: true,
+            strokeWidth: selected ? 2 : 1,
+            strokeColor:
+                selected ? Colors.red : Colors.red.withValues(alpha: 0.35),
+            fillColor: selected
+                ? Colors.red.withValues(alpha: 0.42)
+                : Colors.red.withValues(alpha: 0.06),
+            onTap: () => _toggleHex(index),
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _polygons = polygons;
+    });
+  }
 
   LatLng _hexCenterFromOffset({
     required LatLng center,
     required int row,
     required int col,
   }) {
-    final dx = _hexRadiusMeters * 1.5 * col;
-    final dy = _hexRadiusMeters * sqrt(3) * (row + col / 2);
+    final dx = _hexRadiusMeters * 1.5 * _hexSpacingFix * col;
+
+    final dy = _hexRadiusMeters * sqrt(3) * _hexSpacingFix * (row + col / 2);
 
     return _moveMeters(
       center,
@@ -168,8 +170,7 @@ class _RestrictedHexZonesScreenState extends State<RestrictedHexZonesScreen> {
     const earthRadius = 6378137.0;
 
     final dLat = northMeters / earthRadius;
-    final dLng =
-        eastMeters / (earthRadius * cos(pi * origin.latitude / 180));
+    final dLng = eastMeters / (earthRadius * cos(pi * origin.latitude / 180));
 
     final lat = origin.latitude + dLat * 180 / pi;
     final lng = origin.longitude + dLng * 180 / pi;
