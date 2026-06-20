@@ -46,7 +46,7 @@ class DriverAiCaptureService : Service() {
     private var virtualDisplay: VirtualDisplay? = null
     private var mediaProjection: MediaProjection? = null
 
-    private val ocrProcessor = DriverAiOcrProcessor()
+    private lateinit var ocrProcessor: DriverAiOcrProcessor
     private lateinit var overlayManager: DriverAiOverlayManager
 
     private var isProcessing = false
@@ -82,6 +82,7 @@ class DriverAiCaptureService : Service() {
         historyRepository = DriverAiHistoryRepository(this)
         overlayManager = DriverAiOverlayManager(this)
         activeInstance = this
+        ocrProcessor = DriverAiOcrProcessor(this)
 
         createNotificationChannel()
         startDriverAiForeground()

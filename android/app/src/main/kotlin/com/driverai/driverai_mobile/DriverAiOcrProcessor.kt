@@ -6,7 +6,10 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
-class DriverAiOcrProcessor {
+class DriverAiOcrProcessor (
+    private val context: Context
+)
+{
 
     companion object {
         private const val TAG = "DriverAI_OCR"
@@ -37,9 +40,21 @@ class DriverAiOcrProcessor {
                     val offer = parseOffer(text)
 
                     if (offer == null) {
-                        onComplete()
-                        return@addOnSuccessListener
-                    }
+                        if (looksLikePossibleOffer(text)) {
+                            Log.d(
+    TAG,
+    "OCR posible oferta no parseada"
+)
+
+DriverAiOcrSampleLogger.save(
+    context,
+    text
+)
+            }
+
+    onComplete()
+    return@addOnSuccessListener
+}
 
                     Log.d(TAG, "Oferta detectada: $offer")
 
@@ -73,18 +88,27 @@ class DriverAiOcrProcessor {
         val totalMinutes: Int
 
         if (totalDelivery != null) {
-            totalKm = totalDelivery.km
+    totalKm = totalDelivery.km
+    totalMinutes = totalDelivery.minutes
+} else {
+    val pickupKm = pickup?.km ?: 0.0
+    val tripKm = trip?.km ?: 0.0
 
-            totalMinutes = totalDelivery.minutes
+    val calculatedKm = pickupKm + tripKm
+    val calculatedMinutes =
+        (pickup?.minutes ?: 0) + (trip?.minutes ?: 0)
+
+    val fallback =
+        if (calculatedKm <= 0 || calculatedMinutes <= 0) {
+            extractAnyTimeDistance(text)
         } else {
-            val pickupKm = pickup?.km ?: 0.0
-
-            val tripKm = trip?.km ?: 0.0
-
-            totalKm = pickupKm + tripKm
-
-            totalMinutes = (pickup?.minutes ?: 0) + (trip?.minutes ?: 0)
+            null
         }
+
+    totalKm = if (calculatedKm > 0) calculatedKm else fallback?.km ?: 0.0
+    totalMinutes =
+        if (calculatedMinutes > 0) calculatedMinutes else fallback?.minutes ?: 0
+}
 
         if (fare <= 0) return null
 
@@ -413,6 +437,35 @@ private fun resolveProviderType(
 
     return null
 }
+private fun extractAnyTimeDistance(
+    text: String
+): TimeDistance? {
+    val regex =
+        Regex(
+            """([0-9OIl]+)\s*min\s*\(?\s*([0-9OIl]+(?:[.,][0-9OIl]+)?)\s*km\s*\)?""",
+            RegexOption.IGNORE_CASE
+        )
+
+    val matches =
+        regex.findAll(text)
+            .map { match ->
+                TimeDistance(
+                    minutes = cleanNumber(match.groupValues[1]).toIntOrNull() ?: 0,
+                    km = parseDecimal(cleanNumber(match.groupValues[2]))
+                )
+            }
+            .filter { it.minutes > 0 && it.km > 0 }
+            .toList()
+
+    if (matches.isEmpty()) {
+        return null
+    }
+
+    return TimeDistance(
+        minutes = matches.sumOf { it.minutes },
+        km = matches.sumOf { it.km }
+    )
+}
 
     private fun cleanNumber(value: String): String {
         return value.replace("O", "0")
@@ -469,6 +522,39 @@ private fun resolveProviderType(
 
         return candidates.takeLast(3).joinToString(", ").ifBlank { null }
     }
+
+    private fun looksLikePossibleOffer(
+    text: String
+): Boolean {
+    val cleanText = removeNoise(text)
+
+    val hasPlatform =
+        Regex(
+            """(?i)\b(?:uber|didi|cabify|lyft|99|indriver|in drive)\b"""
+        ).containsMatchIn(cleanText)
+
+    val hasAccept =
+        Regex(
+            """(?i)\b(?:aceptar|accept|aceitar)\b"""
+        ).containsMatchIn(cleanText)
+
+    val hasMoney =
+        Regex(
+            """(?i)(?:₡|CRC|COLONES?|\$|USD|€|MXN|COP|ARS|PEN|DOP|BRL)\s*[0-9][0-9 .,\u00A0]*"""
+        ).containsMatchIn(cleanText)
+
+    val hasDistance =
+        Regex(
+            """(?i)[0-9OIl]+(?:[.,][0-9OIl]+)?\s*km"""
+        ).containsMatchIn(cleanText)
+
+    val hasTime =
+        Regex(
+            """(?i)[0-9OIl]+\s*min"""
+        ).containsMatchIn(cleanText)
+
+    return hasPlatform || (hasAccept && hasMoney) || (hasMoney && hasDistance && hasTime)
+}
 
     enum class Provider {
         UBER,
